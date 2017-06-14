@@ -9,7 +9,8 @@ To train models, training data (tweets and gold labels) needs to be retrieved. A
 
 After retrieving the training files, the [preprocess](https://github.com/Erechtheus/geolocation/blob/master/Preprocess.py) script converts tweets into the desired representation to train a neural network. Models can be trained from scratch using the [trainindividual](https://github.com/Erechtheus/geolocation/blob/master/TrainIndividualModels.py) script. Pretrained models are available in HDF5 format [here](https://drive.google.com/file/d/0B9uTfq0OyHAseWU1Z3pGYjdELTg/view?usp=sharing). Additionally, we require some information on model and preprocessor (e.g., tokenizer) which is provided [here](https://drive.google.com/file/d/0B9uTfq0OyHAsLVQ1LWdpa1FfNDA/view?usp=sharing). The evaluation of models is implemented [here](https://github.com/Erechtheus/geolocation/blob/master/EvaluateTweet.py).
 
-## Example usage for short text
+## Example usage for short text:
+The code below briefly describes how to use our neural network, trained on text only. For other examples (e.g., using Twitter text and metadata), we refer to the examples in the two evaluation scripts
 
 ```python
 from keras.models import load_model
@@ -18,14 +19,14 @@ from keras.preprocessing.sequence import pad_sequences
 import numpy as np
 
 #Load Model
-textBranch = load_model('/media/philippe/5f695998-f5a5-4389-a2d8-4cf3ffa1288a/data/w-nut-latest/models/textBranchNorm.h5')
+textBranch = load_model('data/w-nut-latest/models/textBranchNorm.h5')
 
 #Load tokenizers, and mapping
-file = open("/media/philippe/5f695998-f5a5-4389-a2d8-4cf3ffa1288a/data/w-nut-latest/binaries/processors.obj",'rb')
+file = open("data/w-nut-latest/binaries/processors.obj",'rb')
 descriptionTokenizer, linkTokenizer, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, placeMedian, classes, colnames = pickle.load(file)
 
 #Load properties from model
-file = open("/media/philippe/5f695998-f5a5-4389-a2d8-4cf3ffa1288a/data/w-nut-latest/binaries/vars.obj",'rb')
+file = open("data/w-nut-latest/binaries/vars.obj",'rb')
 MAX_DESC_SEQUENCE_LENGTH, MAX_URL_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX_NAME_SEQUENCE_LENGTH, MAX_TZ_SEQUENCE_LENGTH = pickle.load(file)
 
 #Predict text (e.g., 'Montmartre is truly beautiful')
