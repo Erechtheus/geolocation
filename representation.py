@@ -2,6 +2,9 @@ import json
 import unicodedata
 from urllib.parse import urlparse
 import re
+import time
+from datetime import datetime
+import tldextract
 
 class Place:
     def __init__(self, name=None, lat=None, lon=None):
@@ -57,7 +60,7 @@ class Media:
 
 #Python representation of a tweet
 class Instance:
-    def __init__(self, text="", place="", timezone=None, utcOffset=None, location=None, source=None, media=None, id=None, urls=None, name=None, description = None, userName=None):
+    def __init__(self, text="", place="", timezone=None, utcOffset=None, location=None, source=None, media=None, id=None, urls=None, name=None, description = None, userName=None, userLanguage=None, createdAt =None):
         self._text = text               # The text of the tweet
         self._place = place             # The place if known
         self._timezone = timezone       # Timezone as string (e.g., Hawaii, Baghdad, Pacific Time, ...)
@@ -70,6 +73,8 @@ class Instance:
         self._name = name               # Username
         self._description = description #Description
         self._userName = userName
+        self._userLanguage= userLanguage #he user’s self-declared user interface language.
+        self._createdAt = createdAt     #When has the tweet been sent?
 
     @property
     def text(self):
@@ -119,6 +124,14 @@ class Instance:
     def userName(self):
         return self._userName
 
+    @property
+    def createdAt(self):
+        return self._createdAt
+
+    @property
+    def userLanguage(self):
+        return self._userLanguage
+
     @text.setter
     def text(self, value):
         self._text = value
@@ -167,15 +180,24 @@ class Instance:
     def userName(self, value):
         self._userName = value
 
+    @userLanguage.setter
+    def userLanguage(self, value):
+        self._userLanguage = value
+
+    @createdAt.setter
+    def createdAt(self, value):
+        self._createdAt = value
+
 
 
 #Parses Twitter JSON and returns an Istance object
 def parseJsonLine( line ):
 
     tweet = json.loads(line)
-    #normalized = unicodedata.normalize('NFKD', tweet['text']).encode('ASCII', 'ignore').decode('UTF-8')
+    #normalized = unicodedata.normalize('NFKD', tweet['text']).encode('ASCII', 'ignore').decode('UTF-8') 
     normalized = tweet['text']
-    instance = Instance(text=normalized, timezone=tweet['user']['time_zone'],  location=tweet['user']['location'], name=tweet['user']['name'], utcOffset = tweet['user']['utc_offset'], description = tweet['user']['description'])
+    tweetTime = datetime.strptime(tweet['created_at'], '%a %b %d %H:%M:%S +0000 %Y') #
+    instance = Instance(text=normalized, timezone=tweet['user']['time_zone'],  location=tweet['user']['location'], name=tweet['user']['name'], utcOffset = tweet['user']['utc_offset'], description = tweet['user']['description'], userLanguage = tweet['user']['lang'], createdAt = tweetTime)
 
     #Convert UTC from hours to seconds
     utcOffset = tweet['user']['utc_offset']
@@ -293,11 +315,13 @@ Given a url (e.g., http://www.google.de/abcdf?fx=search), return only domain  an
 """
 def extractPreprocessUrl(url):
     if(url == None):
-        return str('')
+        return (str(''),str(''))
 
     elif(type(url) is str):
-        return re.sub('^www\.', '', urlparse(url).netloc)
+        tmp = tldextract.extract(url)
+        return (tmp.domain.lower(), tmp.suffix.lower()) # Return a tupple (e.g., instagram/com, facebook/de)
 
     else:
-        return re.sub('^www\.', '', urlparse(url[0]['expanded_url']).netloc)
+        tmp = tldextract.extract(url[0]['expanded_url'])
+        return (tmp.domain.lower(), tmp.suffix.lower())
 
