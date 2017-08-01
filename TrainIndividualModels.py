@@ -1,30 +1,30 @@
 #Load stuff:
 import pickle
+import numpy as np
 import time
 from keras.models import Sequential
-from keras.layers import LSTM, Dropout, InputLayer, Dense, Merge, BatchNormalization
+from keras.layers import LSTM,  Dropout, InputLayer, Dense, BatchNormalization, SpatialDropout1D
 from keras.layers.embeddings import Embedding
-
+import math
 
 #Load preprocessed data...
-file = open("data/w-nut-latest/binaries/processors.obj",'rb')
-descriptionTokenizer, linkTokenizer, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, placeMedian, classes, colnames = pickle.load(file)
+file = open("/media/philippe/5f695998-f5a5-4389-a2d8-4cf3ffa1288a/data/w-nut-latest/binaries/processors.obj",'rb')
+descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, timeEncoder, placeMedian, classes, colnames = pickle.load(file)
 
-file = open("w-nut-latest/binaries/vars.obj",'rb')
-MAX_DESC_SEQUENCE_LENGTH, MAX_URL_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX_NAME_SEQUENCE_LENGTH, MAX_TZ_SEQUENCE_LENGTH = pickle.load(file)
+file = open("/media/philippe/5f695998-f5a5-4389-a2d8-4cf3ffa1288a/data/w-nut-latest/binaries/vars.obj",'rb')
+MAX_DESC_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX_NAME_SEQUENCE_LENGTH, MAX_TZ_SEQUENCE_LENGTH = pickle.load(file)
 
-file = open("data/w-nut-latest/binaries/data.obj",'rb')
-trainDescription, trainLinks, trainLocation, trainSource, trainTexts, trainUserName, trainTZ, trainUtc = pickle.load(file)
+file = open("/media/philippe/5f695998-f5a5-4389-a2d8-4cf3ffa1288a/data/w-nut-latest/binaries/data.obj",'rb')
+trainDescription,  trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt = pickle.load(file)
 
 
 ##################Train
-# Used settings
+# create the model
 batch_size = 256
 nb_epoch = 5
-verbosity=2
+verbosity=1
 
 descriptionEmbeddings = 100
-linkEmbeddings = 100
 locEmbeddings = 50
 textEmbeddings = 100
 nameEmbeddings = 100
@@ -33,15 +33,16 @@ tzEmbeddings = 50
 
 
 ####################
-#1. Model: Description Model
+#1.) Description Model
 descriptionBranch = Sequential()
-descriptionBranch.add(Embedding(descriptionTokenizer.nb_words,
+descriptionBranch.add(Embedding(descriptionTokenizer.num_words,
                                 descriptionEmbeddings,
-                                input_length=MAX_DESC_SEQUENCE_LENGTH,
-                                dropout=0.2))
+                                input_length=MAX_DESC_SEQUENCE_LENGTH
+                                ))
+descriptionBranch.add(SpatialDropout1D(rate=0.2))
 descriptionBranch.add(BatchNormalization())
 descriptionBranch.add(Dropout(0.2))
-descriptionBranch.add(LSTM(output_dim=30))
+descriptionBranch.add(LSTM(units=30))
 descriptionBranch.add(BatchNormalization())
 descriptionBranch.add(Dropout(0.2, name="description"))
 
@@ -49,7 +50,7 @@ descriptionBranch.add(Dense(len(set(classes)), activation='softmax'))
 descriptionBranch.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 start = time.time()
 descriptionHistory = descriptionBranch.fit(trainDescription, classes,
-                    nb_epoch=nb_epoch, batch_size=batch_size,
+                    epochs=nb_epoch, batch_size=batch_size,
                     verbose=verbosity
                     )
 print("descriptionBranch finished after " +str(time.time() - start))
@@ -59,43 +60,86 @@ descriptionBranch.save('data/w-nut-latest/models/descriptionBranchNorm.h5')
 
 
 #####################
-#2. Model: Link Model
-linkBranch = Sequential()
-linkBranch.add(Embedding(linkTokenizer.nb_words,
-                         linkEmbeddings,
-                         input_length=MAX_URL_SEQUENCE_LENGTH,
-                         mask_zero=True,
-                         dropout=0.2))
-linkBranch.add(BatchNormalization())
-linkBranch.add(Dropout(0.2))
-linkBranch.add(LSTM(output_dim=30))
-linkBranch.add(BatchNormalization())
-linkBranch.add(Dropout(0.2, name="link"))
+#2a.) Link Model for Domain
+categorial = np.zeros((len(trainDomain), len(domainEncoder.classes_)), dtype="bool")
+for i in range(len(trainDomain)):
+    categorial[i, trainDomain[i]] = True
+trainDomain = categorial
 
-linkBranch.add(Dense(len(set(classes)), activation='softmax'))
-linkBranch.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+domainBranch = Sequential()
+domainBranch.add(InputLayer(input_shape=(trainDomain.shape[1],)))
+domainBranch.add(Dense(int(math.log2(trainDomain.shape[1])), activation='relu'))
+domainBranch.add(BatchNormalization())
+domainBranch.add(Dropout(0.2, name="domainName"))
+
+domainBranch.add(Dense(len(set(classes)), activation='softmax'))
+domainBranch.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 start = time.time()
-linkHistory = linkBranch.fit(trainLinks, classes,
-                    nb_epoch=nb_epoch, batch_size=batch_size,
+sourceHistory = domainBranch.fit(trainDomain, classes,
+                    epochs=nb_epoch, batch_size=batch_size,
                     verbose=verbosity
                     )
-print("linkBranch finished after " +str(time.time() - start))
-linkBranch.save('data/w-nut-latest/models/linkBranchNorm.h5')
+print("tldBranch finished after " +str(time.time() - start))
+domainBranch.save('data/w-nut-latest/models/domainBranch.h5')
 
 
 
+#2b.) Link Model for TLD
+categorial = np.zeros((len(trainTld), len(tldEncoder.classes_)), dtype="bool")
+for i in range(len(trainTld)):
+    categorial[i, trainTld[i]] = True
+trainTld = categorial
+
+
+tldBranch = Sequential()
+tldBranch.add(InputLayer(input_shape=(trainTld.shape[1],)))
+tldBranch.add(Dense(int(math.log2(trainTld.shape[1])), activation='relu'))
+tldBranch.add(BatchNormalization())
+tldBranch.add(Dropout(0.2, name="tld"))
+
+
+tldBranch.add(Dense(len(set(classes)), activation='softmax'))
+tldBranch.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+start = time.time()
+sourceHistory = tldBranch.fit(trainTld, classes,
+                    epochs=nb_epoch, batch_size=batch_size,
+                    verbose=verbosity
+                    )
+print("tldBranch finished after " +str(time.time() - start))
+tldBranch.save('data/w-nut-latest/models/tldBranch.h5')
+
+
+#2c.) TODO Merged Model
+linkModel = Sequential()
+linkModel.add(InputLayer(input_shape=((trainDomain.shape[1]+trainTld.shape[1]),)))
+linkModel.add(Dense(int(math.log2(trainDomain.shape[1]+trainTld.shape[1])), activation='relu'))
+linkModel.add(BatchNormalization())
+linkModel.add(Dropout(0.2, name="linkModel"))
+
+
+linkModel.add(Dense(len(set(classes)), activation='softmax'))
+linkModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+start = time.time()
+sourceHistory = linkModel.fit(np.concatenate((trainDomain, trainTld), axis=1), classes,
+                    epochs=nb_epoch, batch_size=batch_size,
+                    verbose=verbosity
+                    )
+print("linkModel finished after " +str(time.time() - start))
+linkModel.save('data/w-nut-latest/models/linkModel.h5')
 
 
 #####################
-#3. Model: location Model
+#3.) location Model
 locationBranch = Sequential()
-locationBranch.add(Embedding(locationTokenizer.nb_words,
+locationBranch.add(Embedding(locationTokenizer.num_words,
                              locEmbeddings,
-                    input_length=MAX_LOC_SEQUENCE_LENGTH,
-                    dropout=0.2))
+                    input_length=MAX_LOC_SEQUENCE_LENGTH
+                    ))
+locationBranch.add(SpatialDropout1D(rate=0.2))
 locationBranch.add(BatchNormalization())
 locationBranch.add(Dropout(0.2))
-locationBranch.add(LSTM(output_dim=30))
+locationBranch.add(LSTM(units=30))
 locationBranch.add(BatchNormalization())
 locationBranch.add(Dropout(0.2, name="location"))
 
@@ -103,7 +147,7 @@ locationBranch.add(Dense(len(set(classes)), activation='softmax'))
 locationBranch.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 start = time.time()
 locationHistory = locationBranch.fit(trainLocation, classes,
-                    nb_epoch=nb_epoch, batch_size=batch_size,
+                    epochs=nb_epoch, batch_size=batch_size,
                     verbose=verbosity
                     )
 print("locationHistory finished after " +str(time.time() - start))
@@ -111,15 +155,25 @@ locationBranch.save('data/w-nut-latest/models/locationBranchNorm.h5')
 
 
 #####################
-#4. Model: Source Mode
+#4.) Source Mode
+categorial = np.zeros((len(trainSource), len(sourceEncoder.classes_)), dtype="bool")
+for i in range(len(trainSource)):
+    categorial[i, trainSource[i]] = True
+trainSource = categorial
+
+
 sourceBranch = Sequential()
-sourceBranch.add(InputLayer(input_shape=(trainSource.shape[1],), name="source"))
+sourceBranch.add(InputLayer(input_shape=(trainSource.shape[1],)))
+sourceBranch.add(Dense(int(math.log2(trainSource.shape[1])), activation='relu'))
+sourceBranch.add(BatchNormalization())
+sourceBranch.add(Dropout(0.2, name="source"))
+
 
 sourceBranch.add(Dense(len(set(classes)), activation='softmax'))
 sourceBranch.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 start = time.time()
 sourceHistory = sourceBranch.fit(trainSource, classes,
-                    nb_epoch=nb_epoch, batch_size=batch_size,
+                    epochs=nb_epoch, batch_size=batch_size,
                     verbose=verbosity
                     )
 print("sourceBranch finished after " +str(time.time() - start))
@@ -128,15 +182,16 @@ sourceBranch.save('data/w-nut-latest/models/sourceBranch.h5')
 
 
 #####################
-#5. Model: Text Model
+#5.) Text Model
 textBranch = Sequential()
-textBranch.add(Embedding(textTokenizer.nb_words,
+textBranch.add(Embedding(textTokenizer.num_words,
                          textEmbeddings ,
-                    input_length=MAX_TEXT_SEQUENCE_LENGTH,
-                    dropout=0.2))
+                        input_length=MAX_TEXT_SEQUENCE_LENGTH
+                         ))
+textBranch.add(SpatialDropout1D(rate=0.2))
 textBranch.add(BatchNormalization())
 textBranch.add(Dropout(0.2))
-textBranch.add(LSTM(output_dim=30))
+textBranch.add(LSTM(units=30))
 textBranch.add(BatchNormalization())
 textBranch.add(Dropout(0.2, name="text"))
 
@@ -144,7 +199,7 @@ textBranch.add(Dense(len(set(classes)), activation='softmax'))
 textBranch.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 start = time.time()
 textHistory = textBranch.fit(trainTexts, classes,
-                    nb_epoch=nb_epoch, batch_size=batch_size,
+                    epochs=nb_epoch, batch_size=batch_size,
                     verbose=verbosity
                     )
 print("textBranch finished after " +str(time.time() - start))
@@ -152,18 +207,17 @@ textBranch.save('data/w-nut-latest/models/textBranchNorm.h5')
 
 
 
-
-
 #####################
-# 6. Model: Name Model
+# 6.) Name Model
 nameBranch = Sequential()
-nameBranch.add(Embedding(nameTokenizer.nb_words,
+nameBranch.add(Embedding(nameTokenizer.num_words,
                          nameEmbeddings,
-                         input_length=MAX_NAME_SEQUENCE_LENGTH,
-                         dropout=0.2))
+                         input_length=MAX_NAME_SEQUENCE_LENGTH
+                         ))
+nameBranch.add(SpatialDropout1D(rate=0.2))
 nameBranch.add(BatchNormalization())
 nameBranch.add(Dropout(0.2))
-nameBranch.add(LSTM(output_dim=30))
+nameBranch.add(LSTM(units=30))
 nameBranch.add(BatchNormalization())
 nameBranch.add(Dropout(0.2, name="username"))
 
@@ -171,7 +225,7 @@ nameBranch.add(Dense(len(set(classes)), activation='softmax'))
 nameBranch.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 start = time.time()
 nameHistory = nameBranch.fit(trainUserName, classes,
-                    nb_epoch=nb_epoch, batch_size=batch_size,
+                    epochs=nb_epoch, batch_size=batch_size,
                     verbose=verbosity
                     )
 print("nameBranch finished after " +str(time.time() - start))
@@ -182,15 +236,16 @@ nameBranch.save('data/w-nut-latest/models/nameBranchNorm.h5')
 
 
 #####################
-# 7. Model: TimeZone Model
+# 7.) TimeZone Model
 tzBranch = Sequential()
-tzBranch.add(Embedding(timeZoneTokenizer.nb_words,
+tzBranch.add(Embedding(timeZoneTokenizer.num_words,
                        tzEmbeddings,
-                       input_length=MAX_TZ_SEQUENCE_LENGTH,
-                       dropout=0.2))
+                       input_length=MAX_TZ_SEQUENCE_LENGTH
+                       ))
+tzBranch.add(SpatialDropout1D(rate=0.2))
 tzBranch.add(BatchNormalization())
 tzBranch.add(Dropout(0.2))
-tzBranch.add(LSTM(output_dim=30))
+tzBranch.add(LSTM(units=30))
 tzBranch.add(BatchNormalization())
 tzBranch.add(Dropout(0.2, name="timezone"))
 
@@ -198,7 +253,7 @@ tzBranch.add(Dense(len(set(classes)), activation='softmax'))
 tzBranch.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 start = time.time()
 tzHistory = tzBranch.fit(trainTZ, classes,
-                    nb_epoch=nb_epoch, batch_size=batch_size,
+                    epochs=nb_epoch, batch_size=batch_size,
                     verbose=verbosity
                     )
 print("tzBranch finished after " +str(time.time() - start))
@@ -207,50 +262,98 @@ tzBranch.save('data/w-nut-latest/models/tzBranchNorm.h5')
 
 
 #####################
-# 8. Model: UTC Model
+# 8.) UTC Model
+categorial = np.zeros((len(trainUtc), len(utcEncoder.classes_)), dtype="bool")
+for i in range(len(trainUtc)):
+    categorial[i, trainUtc[i]] = True
+trainUtc = categorial
+
+
 utcBranch = Sequential()
-utcBranch.add(InputLayer(input_shape=(trainUtc.shape[1],), name="utc"))
+utcBranch.add(InputLayer(input_shape=(trainUtc.shape[1],)))
+utcBranch.add(Dense(int(math.log2(trainUtc.shape[1])), activation='relu'))
+utcBranch.add(BatchNormalization())
+utcBranch.add(Dropout(0.2, name="utc"))
+
 
 utcBranch.add(Dense(len(set(classes)), activation='softmax'))
 utcBranch.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 start = time.time()
 utcHistory = utcBranch.fit(trainUtc, classes,
-                    nb_epoch=nb_epoch, batch_size=batch_size,
+                    epochs=nb_epoch, batch_size=batch_size,
                     verbose=verbosity
                     )
 print("utcBranch finished after " +str(time.time() - start))
 utcBranch.save('data/w-nut-latest/models/utcBranch.h5')
 
 
+#9) "User Language
+categorial = np.zeros((len(trainUserLang), len(langEncoder.classes_)), dtype="bool")
+for i in range(len(trainUserLang)):
+    categorial[i, trainUserLang[i]] = True
+trainUserLang = categorial
+
+userLangBranch = Sequential()
+userLangBranch.add(InputLayer(input_shape=(trainUserLang.shape[1],)))
+userLangBranch.add(Dense(int(math.log2(trainUserLang.shape[1])), activation='relu'))
+userLangBranch.add(BatchNormalization())
+userLangBranch.add(Dropout(0.2, name="userLang"))
 
 
-
-#####################
-# 9. Model: Merged model
-from keras.models import Model
-model1 = Model(input=descriptionBranch.input, output=descriptionBranch.get_layer('description').output)
-model2 = Model(input=linkBranch.input, output=linkBranch.get_layer('link').output)
-model3 = Model(input=locationBranch.input, output=locationBranch.get_layer('location').output)
-model4 = Model(input=sourceBranch.input, output=sourceBranch.get_layer('source').output)
-model5 = Model(input=textBranch.input, output=textBranch.get_layer('text').output)
-model6 = Model(input=nameBranch.input, output=nameBranch.get_layer('username').output)
-model7 = Model(input=tzBranch.input, output=tzBranch.get_layer('timezone').output)
-model8 = Model(input=utcBranch.input, output=utcBranch.get_layer('utc').output)
-
-
-merged = Merge([model1, model2, model3, model4, model5, model6, model7, model8], mode='concat', name="merged")
-final_model = Sequential()
-final_model.add(merged)
-final_model.add(Dense(len(set(classes)), activation='softmax'))
-final_model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-
-
+userLangBranch.add(Dense(len(set(classes)), activation='softmax'))
+userLangBranch.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 start = time.time()
-finalHistory = final_model.fit([trainDescription, trainLinks, trainLocation, trainSource, trainTexts, trainUserName, trainTZ, trainUtc],
-                          classes,
-                    nb_epoch=nb_epoch, batch_size=batch_size,
+userLangHistory = userLangBranch.fit(trainUserLang, classes,
+                    epochs=nb_epoch, batch_size=batch_size,
                     verbose=verbosity
                     )
-end = time.time()
-print("final_model finished after " +str(end - start))
-final_model.save('ata/w-nut-latest/models/finalBranch.h5')
+print("userLangBranch finished after " +str(time.time() - start))
+userLangBranch.save('data/w-nut-latest/models/userLangBranch.h5')
+
+
+#10) #Tweet-Time (120)
+categorial = np.zeros((len(trainCreatedAt), len(timeEncoder.classes_)), dtype="bool")
+for i in range(len(trainCreatedAt)):
+    categorial[i, trainCreatedAt[i]] = True
+trainCreatedAt = categorial
+
+tweetTimeBranch = Sequential()
+tweetTimeBranch.add(InputLayer(input_shape=(trainCreatedAt.shape[1],)))
+tweetTimeBranch.add(Dense(int(math.log2(trainCreatedAt.shape[1])), activation='relu'))
+tweetTimeBranch.add(BatchNormalization())
+tweetTimeBranch.add(Dropout(0.2, name="tweetTime"))
+
+
+tweetTimeBranch.add(Dense(len(set(classes)), activation='softmax'))
+tweetTimeBranch.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+start = time.time()
+userLangHistory = tweetTimeBranch.fit(trainCreatedAt, classes,
+                    epochs=nb_epoch, batch_size=batch_size,
+                    verbose=verbosity
+                    )
+print("tweetTimeBranch finished after " +str(time.time() - start))
+tweetTimeBranch.save('data/w-nut-latest/models/tweetTimeBranch.h5')
+
+
+
+#11) Merged sequential model
+trainData = np.concatenate((trainDomain, trainTld, trainSource, trainUtc, trainUserLang, trainCreatedAt), axis=1)
+
+categorialModel = Sequential()
+categorialModel.add(InputLayer(input_shape=(trainData.shape[1],)))
+categorialModel.add(Dense(int(math.log2(trainData.shape[1])), activation='relu'))
+categorialModel.add(BatchNormalization())
+categorialModel.add(Dropout(0.2, name="categorialModel"))
+
+
+categorialModel.add(Dense(len(set(classes)), activation='softmax'))
+categorialModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+start = time.time()
+
+categorialModelHistory = categorialModel.fit(trainData, classes,
+                    epochs=nb_epoch, batch_size=batch_size,
+                    verbose=verbosity
+                    )
+print("categorialModel finished after " +str(time.time() - start))
+categorialModel.save('data/w-nut-latest/models/categorialModel.h5')
+
