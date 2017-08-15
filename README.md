@@ -23,7 +23,7 @@ textBranch = load_model('data/w-nut-latest/models/textBranchNorm.h5')
 
 #Load tokenizers, and mapping
 file = open("data/w-nut-latest/binaries/processors.obj",'rb')
-descriptionTokenizer, linkTokenizer, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, placeMedian, classes, colnames = pickle.load(file)
+descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, timeEncoder, placeMedian, classes, colnames = pickle.load(file)
 
 #Load properties from model
 file = open("data/w-nut-latest/binaries/vars.obj",'rb')
