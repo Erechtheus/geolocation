@@ -27,8 +27,7 @@ descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncode
 
 #Load properties from model
 file = open("data/w-nut-latest/binaries/vars.obj",'rb')
-MAX_DESC_SEQUENCE_LENGTH, MAX_URL_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX_NAME_SEQUENCE_LENGTH, MAX_TZ_SEQUENCE_LENGTH = pickle.load(file)
-
+MAX_DESC_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX_NAME_SEQUENCE_LENGTH, MAX_TZ_SEQUENCE_LENGTH = pickle.load(file)
 #Predict text (e.g., 'Montmartre is truly beautiful')
 testTexts=[];
 testTexts.append("Montmartre is truly beautiful")
