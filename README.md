@@ -1,13 +1,34 @@
 # geolocation
 Geolocation prediction for a given Tweet, or a short text. The system trains a neural net, as described in ...
 
+## Citation
+If you're using our tool, we kindly ask to cite the following publication:
+
+	Philippe Thomas and Leonhard Hennig (2017), "Twitter Geolocation Prediction using Neural Networks." In Proceedings of GSCL
+
 # Usage
 
-
-## Train models
+## Train and apply models
 To train models, training data (tweets and gold labels) needs to be retrieved. As Tweets can not be shared directly, we refer to the [WNUT'16 workshop page](http://noisy-text.github.io/2016/geo-shared-task.html) for further information.
 
 After retrieving the training files, the [preprocess](https://github.com/Erechtheus/geolocation/blob/master/Preprocess.py) script converts tweets into the desired representation to train a neural network. Models can be trained from scratch using the [trainindividual](https://github.com/Erechtheus/geolocation/blob/master/TrainIndividualModels.py) script. Pretrained models are available in HDF5 format [here](https://drive.google.com/open?id=0B9uTfq0OyHAsREphWG9OdHptREU). Additionally, we require some information on model and preprocessor (e.g., tokenizer) which is provided [here](https://drive.google.com/open?id=0B9uTfq0OyHAsZHRacHF3NDVObXc). The evaluation of models is implemented [here](https://github.com/Erechtheus/geolocation/blob/master/EvaluateTweet.py).
+
+## Docker image 
+Alternatively we provide a docker container [here](https://drive.google.com/file/d/0B9uTfq0OyHAsRFJlZlViLUN2UVU/view?usp=sharing), containing processed data, pretrained models, and evaluation scripts. Extract, load, and connect to the container using:
+```bash
+unlzma geolocation.docker.lzma
+docker load --input geolocation.docker
+docker run -it dl-base bash
+```
+
+
+Evaluate performance by:
+
+```bash
+python3 code/EvaluateUser.py
+python3 code/EvaluateTweet.py
+```
+
 
 ## Example usage for short text:
 The code below briefly describes how to use our neural network, trained on text only. For other examples (e.g., using Twitter text and metadata), we refer to the examples in the two evaluation scripts
