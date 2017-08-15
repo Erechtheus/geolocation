@@ -44,8 +44,9 @@ for index in reversed(predict.argsort()[0][-5:]):
 ```
 
 ### The output is:
-	paris-a875-fr with score=0.197
-	city of london-enggla-gb with score=0.063
-	boulogne billancourt-a892-fr with score=0.041
-	saint denis-a893-fr with score=0.038
-	creteil-a894-fr with score=0.024
+	paris-a875-fr with score=0.275
+	city of london-enggla-gb with score=0.079
+	boulogne billancourt-a892-fr with score=0.032
+	saint denis-a893-fr with score=0.024
+	meaux-a877-fr with score=0.015
+
