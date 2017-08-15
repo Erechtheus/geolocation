@@ -10,37 +10,42 @@ from keras.models import model_from_yaml
 
 #############################
 # Load the eight individual models
-descriptionBranch = load_model('data/w-nut-latest/models/descriptionBranchNorm.h5')
-linkModel = load_model('data/w-nut-latest/models/linkModel.h5') #Full link model
-domainBranch = load_model('data/w-nut-latest/models/domainBranch.h5') #Partial link model
-tldBranch = load_model('data/w-nut-latest/models/tldBranch.h5') #Partial link model
-locationBranch = load_model('data/w-nut-latest/models/locationBranchNorm.h5')
-sourceBranch = load_model('data/w-nut-latest/models/sourceBranch.h5')
-textBranch = load_model('data/w-nut-latest/models/textBranchNorm.h5')
-nameBranch = load_model('data/w-nut-latest/models/nameBranchNorm.h5')
-tzBranch = load_model('data/w-nut-latest/models/tzBranchNorm.h5')
-utcBranch = load_model('data/w-nut-latest/models/utcBranch.h5')
-userLangBranch = load_model('data/w-nut-latest/models/userLangBranch.h5')
-tweetTimeBranch = load_model('data/w-nut-latest/models/tweetTimeBranch.h5')
+modelPath="/media/philippe/5f695998-f5a5-4389-a2d8-4cf3ffa1288a/data/w-nut-latest/models/"
+binariesPath="/media/philippe/5f695998-f5a5-4389-a2d8-4cf3ffa1288a/data/w-nut-latest/binaries/"
+testFile="/media/philippe/5f695998-f5a5-4389-a2d8-4cf3ffa1288a/data/w-nut-latest/test/data/test.tweet.json"
+goldFile='/media/philippe/5f695998-f5a5-4389-a2d8-4cf3ffa1288a/data/w-nut-latest/test/test_labels/oracle.tweet.json'
+
+descriptionBranch = load_model(modelPath +'descriptionBranchNorm.h5')
+linkModel = load_model(modelPath +'linkModel.h5') #Full link model
+domainBranch = load_model(modelPath +'domainBranch.h5') #Partial link model
+tldBranch = load_model(modelPath +'tldBranch.h5') #Partial link model
+locationBranch = load_model(modelPath +'locationBranchNorm.h5')
+sourceBranch = load_model(modelPath +'sourceBranch.h5')
+textBranch = load_model(modelPath +'textBranchNorm.h5')
+nameBranch = load_model(modelPath + 'nameBranchNorm.h5')
+tzBranch = load_model(modelPath + 'tzBranchNorm.h5')
+utcBranch = load_model(modelPath + 'utcBranch.h5')
+userLangBranch = load_model(modelPath + 'userLangBranch.h5')
+tweetTimeBranch = load_model(modelPath +'tweetTimeBranch.h5')
 
 #Scratch Model:
-yaml_file = open('data/w-nut-latest/models/finalmodel.yaml', 'r')
-loaded_model_yaml = yaml_file.read()
-yaml_file.close()
-final_model = model_from_yaml(loaded_model_yaml)
-final_model.load_weights("data/w-nut-latest/models/finalmodelWeight.h5")
+#yaml_file = open(modelPath +'finalmodel.yaml', 'r')
+#loaded_model_yaml = yaml_file.read()
+#yaml_file.close()
+#final_model = model_from_yaml(loaded_model_yaml)
+#final_model.load_weights(modelPath +"finalmodelWeight.h5")
 
 
 #Retrained model
-yaml_file = open('data/w-nut-latest/models/finalmodel2.yaml', 'r')
+yaml_file = open(modelPath +'finalmodel2.yaml', 'r')
 loaded_model_yaml = yaml_file.read()
 yaml_file.close()
 final_modelTrainable = model_from_yaml(loaded_model_yaml)
-final_modelTrainable.load_weights("data/w-nut-latest/models/finalmodelWeight2.h5")
+final_modelTrainable.load_weights(modelPath+"finalmodelWeight2.h5")
 
 
 ##Evaluate model
-def eval(predictions, type='TWEET', predictToFile='/home/philippe/PycharmProjects/deepLearning/predictions.json', goldFile='/media/philippe/5f695998-f5a5-4389-a2d8-4cf3ffa1288a/data/w-nut-latest/test/test_labels/oracle.tweet.json'):
+def eval(predictions, type='TWEET', predictToFile='/home/philippe/PycharmProjects/deepLearning/predictions.json'):
     out_file = open(predictToFile, "w")
     for i in range(predictions.shape[0]):
         id = testIDs[i]
@@ -62,10 +67,10 @@ def eval(predictions, type='TWEET', predictToFile='/home/philippe/PycharmProject
 
 #############################
 #Evaluate the models on the test data
-file = open("/media/philippe/5f695998-f5a5-4389-a2d8-4cf3ffa1288a/data/w-nut-latest/binaries/processors.obj",'rb')
+file = open(binariesPath +"processors.obj",'rb')
 descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, timeEncoder, placeMedian, classes, colnames = pickle.load(file)
 
-file = open("/media/philippe/5f695998-f5a5-4389-a2d8-4cf3ffa1288a/data/w-nut-latest/binaries/vars.obj",'rb')
+file = open(binariesPath +"vars.obj",'rb')
 MAX_DESC_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX_NAME_SEQUENCE_LENGTH, MAX_TZ_SEQUENCE_LENGTH = pickle.load(file)
 
 def roundMinutes(x, base=15):
@@ -73,7 +78,6 @@ def roundMinutes(x, base=15):
 
 ##Load test-data
 testDescription = []; testLinks = []; testLocations=[]; testSource=[]; testTexts=[]; testUserName=[]; testTimeZone=[]; testUtc = []; testIDs=[]; testUserLang=[]; testCreatedAt=[]
-testFile="/media/philippe/5f695998-f5a5-4389-a2d8-4cf3ffa1288a/data/w-nut-latest/test/data/test.tweet.json"
 f = open(testFile)
 for line in f:
     instance = parseJsonLine(line)
@@ -103,6 +107,7 @@ descriptionSequences = np.asarray(descriptionSequences)  # Convert to ndArray
 descriptionSequences = pad_sequences(descriptionSequences, maxlen=MAX_DESC_SEQUENCE_LENGTH)
 
 predict = descriptionBranch.predict(descriptionSequences)
+print("User description=")
 eval(predict)
 #/home/philippe/PycharmProjects/deepLearning/predictions.json& TWEET& 0.086& 3817.2& 6060.2
 
@@ -116,10 +121,6 @@ for i in range(len(testDomain)):
         categorial[i, domainEncoder.transform([testDomain[i]])[0]] = True
 testDomain = categorial
 
-predict = domainBranch.predict(testDomain)
-eval(predict)
-#/home/philippe/PycharmProjects/deepLearning/predictions.json& TWEET& 0.033& 7592.6& 6972.1
-
 #2b)
 testTld = list(map(lambda x : x[1], testLinks))
 categorial = np.zeros((len(testTld), len(tldEncoder.classes_)), dtype="bool")
@@ -128,12 +129,8 @@ for i in range(len(testTld)):
         categorial[i, tldEncoder.transform([testTld[i]])[0]] = True
 testTld = categorial
 
-predict = tldBranch.predict(testTld)
-eval(predict)
-#/home/philippe/PycharmProjects/deepLearning/predictions.json& TWEET& 0.024& 8028.9& 7813.5
-
-
 #2c)
+print("User links")
 predict = linkModel.predict(np.concatenate((testDomain, testTld), axis=1))
 eval(predict)
 #/home/philippe/PycharmProjects/deepLearning/predictions.json& TWEET& 0.032& 7601.7& 6980.5
@@ -144,6 +141,7 @@ locationSequences = locationTokenizer.texts_to_sequences(testLocations)
 locationSequences = np.asarray(locationSequences)  # Convert to ndArray
 locationSequences = pad_sequences(locationSequences, maxlen=MAX_LOC_SEQUENCE_LENGTH)
 
+print("Location=")
 predict = locationBranch.predict(locationSequences)
 eval(predict)
 #/home/philippe/PycharmProjects/deepLearning/predictions.json& TWEET& 0.361& 205.6& 4538.0
@@ -158,6 +156,8 @@ for i in range(len(testSource)):
         categorial[i, sourceEncoder.transform([testSource[i]])[0]] = True
 testSource = categorial
 
+
+print("Source=")
 predict = sourceBranch.predict(testSource)
 eval(predict)
 #/home/philippe/PycharmProjects/deepLearning/predictions.json& TWEET& 0.045& 8005.0& 7516.8
@@ -169,6 +169,7 @@ textSequences = textTokenizer.texts_to_sequences(testTexts)
 textSequences = np.asarray(textSequences)  # Convert to ndArray
 textSequences = pad_sequences(textSequences, maxlen=MAX_TEXT_SEQUENCE_LENGTH)
 
+print("Text=")
 predict = textBranch.predict(textSequences)
 eval(predict)
 #/home/philippe/PycharmProjects/deepLearning/predictions.json& TWEET& 0.195& 2190.6& 4472.9
@@ -180,6 +181,7 @@ userSequences = nameTokenizer.texts_to_sequences(testUserName)
 userSequences = np.asarray(userSequences)  # Convert to ndArray
 userSequences = pad_sequences(userSequences, maxlen=MAX_NAME_SEQUENCE_LENGTH)
 
+print("Username=")
 predict = nameBranch.predict(userSequences)
 eval(predict)
 #/home/philippe/PycharmProjects/deepLearning/predictions.json& TWEET& 0.057& 3849.0& 5930.1
@@ -190,6 +192,7 @@ tzSequences = timeZoneTokenizer.texts_to_sequences(testTimeZone)
 tzSequences = np.asarray(tzSequences)  # Convert to ndArray
 tzSequences = pad_sequences(tzSequences, maxlen=MAX_TZ_SEQUENCE_LENGTH)
 
+print("TimeZone=")
 predict = tzBranch.predict(tzSequences)
 eval(predict)
 #/home/philippe/PycharmProjects/deepLearning/predictions.json& TWEET& 0.058& 5268.0& 5530.1
@@ -203,6 +206,8 @@ for i in range(len(testUtc)):
         categorial[i, utcEncoder.transform([testUtc[i]])[0]] = True
 
 testUtc = categorial
+
+print("UTC=")
 predict = utcBranch.predict(testUtc)
 eval(predict)
 #/home/philippe/PycharmProjects/deepLearning/predictions.json& TWEET& 0.046& 7698.1& 6849.0
@@ -215,6 +220,7 @@ for i in range(len(testUserLang)):
         categorial[i, langEncoder.transform([testUserLang[i]])[0]] = True
 
 testUserLang = categorial
+print("Userlang=")
 predict = userLangBranch.predict(testUserLang)
 eval(predict)
 #/home/philippe/PycharmProjects/deepLearning/predictions.json& TWEET& 0.061& 6465.1& 7310.2
@@ -231,6 +237,7 @@ for i in range(len(testCreatedAt)):
 
 testCreatedAt = categorial
 
+print("TweetTime")
 predict = tweetTimeBranch.predict(categorial)
 eval(predict)
 #/home/philippe/PycharmProjects/deepLearning/predictions.json& TWEET& 0.028& 8867.6& 8464.9
@@ -239,13 +246,14 @@ eval(predict)
 
 
 #11.) Merged model
-predict = final_model.predict([descriptionSequences, testDomain, testTld, locationSequences, testSource, textSequences, userSequences, tzSequences, testUtc, testUserLang, testCreatedAt ])
-eval(predict)
+#predict = final_model.predict([descriptionSequences, testDomain, testTld, locationSequences, testSource, textSequences, userSequences, tzSequences, testUtc, testUserLang, testCreatedAt ])
+#eval(predict)
 #/home/philippe/PycharmProjects/deepLearning/predictions.json& TWEET& 0.417& 59.0& 1616.4
 
 
 
 #12.) Merged model with original weights; without 2 parts which are not pretrained; maybe include?
-predict = final_modelTrainable.predict([descriptionSequences, testLinks, locationSequences, categorial, textSequences, userSequences, tzSequences, testUtc])
+print("Merged=")
+predict = final_modelTrainable.predict([descriptionSequences, testDomain, testTld, locationSequences, testSource, textSequences, userSequences, tzSequences, testUtc, testUserLang, testCreatedAt ])
 eval(predict)
 #/home/philippe/PycharmProjects/deepLearning/predictions.json& TWEET& 0.43& 47.6& 1179.4
