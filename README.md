@@ -11,7 +11,7 @@ To train models, training data (tweets and gold labels) needs to be retrieved. A
 After retrieving the training files, the [preprocess](https://github.com/Erechtheus/geolocation/blob/master/Preprocess.py) script converts tweets into the desired representation to train a neural network. Models can be trained from scratch using the [trainindividual](https://github.com/Erechtheus/geolocation/blob/master/TrainIndividualModels.py) script. Pretrained models are available in HDF5 format [here](https://drive.google.com/open?id=0B9uTfq0OyHAsREphWG9OdHptREU). Additionally, we require some information on model and preprocessor (e.g., tokenizer) which is provided [here](https://drive.google.com/open?id=0B9uTfq0OyHAsZHRacHF3NDVObXc). The evaluation of models is implemented [here](https://github.com/Erechtheus/geolocation/blob/master/EvaluateTweet.py).
 
 ## Docker image 
-Alternatively we provide a docker container [here](https://drive.google.com/file/d/0B9uTfq0OyHAsRFJlZlViLUN2UVU/view?usp=sharing), containing processed data (e.g., tokenizers), pretrained models, evaluation data, and scripts. Extract, load, and connect to the container using:
+Alternatively we provide a docker container [here](https://drive.google.com/open?id=0B9uTfq0OyHAsRDd1ZU9ldmxhTFE), containing processed data (e.g., tokenizers), pretrained models, evaluation data, and scripts. Extract, load, and connect to the container using:
 ```bash
 unlzma geolocation.docker.lzma
 docker load --input geolocation.docker
