@@ -15,7 +15,7 @@ Alternatively we provide a docker container [here](https://drive.google.com/file
 ```bash
 unlzma geolocation.docker.lzma
 docker load --input geolocation.docker
-sudo docker run -it geolocation:version1 bash
+docker run -it geolocation:v1 bash
 ```
 
 Evaluate performance by:
