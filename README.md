@@ -1,8 +1,5 @@
 # geolocation
-Geolocation prediction for a given Tweet, or a short text. The system trains a neural net, as described in ...
-
-## Citation
-If you're using our tool, we kindly ask to cite the following publication:
+Geolocation prediction for a given Tweet, or a short text. The system trains a neural net, as described in
 
 	Philippe Thomas and Leonhard Hennig (2017), "Twitter Geolocation Prediction using Neural Networks." In Proceedings of GSCL
 
