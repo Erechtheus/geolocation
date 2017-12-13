@@ -134,7 +134,7 @@ domainEncoder.fit(trainDomain)
 trainDomain = domainEncoder.transform(trainDomain)
 
 
-trainTld = list(map(lambda x : x[1], )) #Url suffix; top level domain
+trainTld = list(map(lambda x : x[1], trainLinks)) #Url suffix; top level domain
 
 count = Counter(trainTld)
 for i in range(len(trainTld)):
