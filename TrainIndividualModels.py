@@ -7,14 +7,17 @@ from keras.layers import LSTM,  Dropout, InputLayer, Dense, BatchNormalization, 
 from keras.layers.embeddings import Embedding
 import math
 
+binaryPath="/media/philippe/5f695998-f5a5-4389-a2d8-4cf3ffa1288a/data/w-nut-latest/binaries/"
+modelPath="data/w-nut-latest/models/"
+
 #Load preprocessed data...
-file = open("/media/philippe/5f695998-f5a5-4389-a2d8-4cf3ffa1288a/data/w-nut-latest/binaries/processors.obj",'rb')
+file = open(binaryPath +"processors.obj",'rb')
 descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, timeEncoder, placeMedian, classes, colnames = pickle.load(file)
 
-file = open("/media/philippe/5f695998-f5a5-4389-a2d8-4cf3ffa1288a/data/w-nut-latest/binaries/vars.obj",'rb')
+file = open(binaryPath +"vars.obj",'rb')
 MAX_DESC_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX_NAME_SEQUENCE_LENGTH, MAX_TZ_SEQUENCE_LENGTH = pickle.load(file)
 
-file = open("/media/philippe/5f695998-f5a5-4389-a2d8-4cf3ffa1288a/data/w-nut-latest/binaries/data.obj",'rb')
+file = open(binaryPath +"data.obj",'rb')
 trainDescription,  trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt = pickle.load(file)
 
 
@@ -54,7 +57,7 @@ descriptionHistory = descriptionBranch.fit(trainDescription, classes,
                     verbose=verbosity
                     )
 print("descriptionBranch finished after " +str(time.time() - start))
-descriptionBranch.save('data/w-nut-latest/models/descriptionBranchNorm.h5')
+descriptionBranch.save(modelPath +'descriptionBranchNorm.h5')
 
 
 
@@ -81,7 +84,7 @@ sourceHistory = domainBranch.fit(trainDomain, classes,
                     verbose=verbosity
                     )
 print("tldBranch finished after " +str(time.time() - start))
-domainBranch.save('data/w-nut-latest/models/domainBranch.h5')
+domainBranch.save(modelPath + 'domainBranch.h5')
 
 
 
@@ -107,7 +110,7 @@ sourceHistory = tldBranch.fit(trainTld, classes,
                     verbose=verbosity
                     )
 print("tldBranch finished after " +str(time.time() - start))
-tldBranch.save('data/w-nut-latest/models/tldBranch.h5')
+tldBranch.save(modelPath + 'tldBranch.h5')
 
 
 #2c.) TODO Merged Model
@@ -151,7 +154,7 @@ locationHistory = locationBranch.fit(trainLocation, classes,
                     verbose=verbosity
                     )
 print("locationHistory finished after " +str(time.time() - start))
-locationBranch.save('data/w-nut-latest/models/locationBranchNorm.h5')
+locationBranch.save(modelPath +'locationBranchNorm.h5')
 
 
 #####################
@@ -177,7 +180,7 @@ sourceHistory = sourceBranch.fit(trainSource, classes,
                     verbose=verbosity
                     )
 print("sourceBranch finished after " +str(time.time() - start))
-sourceBranch.save('data/w-nut-latest/models/sourceBranch.h5')
+sourceBranch.save(modelPath +'sourceBranch.h5')
 
 
 
@@ -203,7 +206,7 @@ textHistory = textBranch.fit(trainTexts, classes,
                     verbose=verbosity
                     )
 print("textBranch finished after " +str(time.time() - start))
-textBranch.save('data/w-nut-latest/models/textBranchNorm.h5')
+textBranch.save(modelPath +'textBranchNorm.h5')
 
 
 
@@ -229,7 +232,7 @@ nameHistory = nameBranch.fit(trainUserName, classes,
                     verbose=verbosity
                     )
 print("nameBranch finished after " +str(time.time() - start))
-nameBranch.save('data/w-nut-latest/models/nameBranchNorm.h5')
+nameBranch.save(modelPath +'nameBranchNorm.h5')
 
 
 
@@ -257,7 +260,7 @@ tzHistory = tzBranch.fit(trainTZ, classes,
                     verbose=verbosity
                     )
 print("tzBranch finished after " +str(time.time() - start))
-tzBranch.save('data/w-nut-latest/models/tzBranchNorm.h5')
+tzBranch.save(modelPath +'tzBranchNorm.h5')
 
 
 
@@ -284,7 +287,7 @@ utcHistory = utcBranch.fit(trainUtc, classes,
                     verbose=verbosity
                     )
 print("utcBranch finished after " +str(time.time() - start))
-utcBranch.save('data/w-nut-latest/models/utcBranch.h5')
+utcBranch.save(modelPath +'utcBranch.h5')
 
 
 #9) "User Language
@@ -308,7 +311,7 @@ userLangHistory = userLangBranch.fit(trainUserLang, classes,
                     verbose=verbosity
                     )
 print("userLangBranch finished after " +str(time.time() - start))
-userLangBranch.save('data/w-nut-latest/models/userLangBranch.h5')
+userLangBranch.save(modelPath +'userLangBranch.h5')
 
 
 #10) #Tweet-Time (120)
@@ -332,7 +335,7 @@ userLangHistory = tweetTimeBranch.fit(trainCreatedAt, classes,
                     verbose=verbosity
                     )
 print("tweetTimeBranch finished after " +str(time.time() - start))
-tweetTimeBranch.save('data/w-nut-latest/models/tweetTimeBranch.h5')
+tweetTimeBranch.save(modelPath +'tweetTimeBranch.h5')
 
 
 
@@ -355,5 +358,5 @@ categorialModelHistory = categorialModel.fit(trainData, classes,
                     verbose=verbosity
                     )
 print("categorialModel finished after " +str(time.time() - start))
-categorialModel.save('data/w-nut-latest/models/categorialModel.h5')
+categorialModel.save(modelPath +'categorialModel.h5')
 

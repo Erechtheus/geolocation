@@ -7,26 +7,29 @@ from keras.models import Sequential
 import time
 
 #############################
-# Load the eight individual models
-descriptionBranch = load_model('data/w-nut-latest/models/descriptionBranchNorm.h5')
-domainBranch = load_model('data/w-nut-latest/models/domainBranch.h5')
-tldBranch = load_model('data/w-nut-latest/models/tldBranch.h5')
-locationBranch = load_model('data/w-nut-latest/models/locationBranchNorm.h5')
-sourceBranch = load_model('data/w-nut-latest/models/sourceBranch.h5')
-textBranch = load_model('data/w-nut-latest/models/textBranchNorm.h5')
-nameBranch = load_model('data/w-nut-latest/models/nameBranchNorm.h5')
-tzBranch = load_model('data/w-nut-latest/models/tzBranchNorm.h5')
-utcBranch = load_model('data/w-nut-latest/models/utcBranch.h5')
-userLangBranch = load_model('data/w-nut-latest/models/userLangBranch.h5')
-tweetTimeBranch = load_model('data/w-nut-latest/models/tweetTimeBranch.h5')
+binaryPath="/media/philippe/5f695998-f5a5-4389-a2d8-4cf3ffa1288a/data/w-nut-latest/binaries/"
+modelPath="data/w-nut-latest/models/"
 
-file = open("/media/philippe/5f695998-f5a5-4389-a2d8-4cf3ffa1288a/data/w-nut-latest/binaries/processors.obj",'rb')
+# Load the eight individual models
+descriptionBranch = load_model(modelPath +'descriptionBranchNorm.h5')
+domainBranch = load_model(modelPath +'domainBranch.h5')
+tldBranch = load_model(modelPath +'tldBranch.h5')
+locationBranch = load_model(modelPath +'locationBranchNorm.h5')
+sourceBranch = load_model(modelPath +'sourceBranch.h5')
+textBranch = load_model(modelPath +'textBranchNorm.h5')
+nameBranch = load_model(modelPath +'nameBranchNorm.h5')
+tzBranch = load_model(modelPath +'tzBranchNorm.h5')
+utcBranch = load_model(modelPath +'utcBranch.h5')
+userLangBranch = load_model(modelPath +'userLangBranch.h5')
+tweetTimeBranch = load_model(modelPath +'tweetTimeBranch.h5')
+
+file = open(binaryPath +"processors.obj",'rb')
 descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, timeEncoder, placeMedian, classes, colnames = pickle.load(file)
 
-file = open("/media/philippe/5f695998-f5a5-4389-a2d8-4cf3ffa1288a/data/w-nut-latest/binaries/vars.obj",'rb')
+file = open(binaryPath +"vars.obj",'rb')
 MAX_DESC_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX_NAME_SEQUENCE_LENGTH, MAX_TZ_SEQUENCE_LENGTH = pickle.load(file)
 
-file = open("/media/philippe/5f695998-f5a5-4389-a2d8-4cf3ffa1288a/data/w-nut-latest/binaries/data.obj",'rb')
+file = open(binaryPath +"data.obj",'rb')
 trainDescription,  trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt = pickle.load(file)
 
 # create the model
@@ -140,6 +143,6 @@ print("final_model finished after " +str(end - start))
 
 
 model_yaml = final_model.to_yaml()
-with open("data/w-nut-latest/models/finalmodel2.yaml", "w") as yaml_file:
+with open(modelPath +"finalmodel2.yaml", "w") as yaml_file:
     yaml_file.write(model_yaml)
-final_model.save_weights('data/w-nut-latest/models/finalmodelWeight2.h5')
+final_model.save_weights(modelPath +'finalmodelWeight2.h5')
