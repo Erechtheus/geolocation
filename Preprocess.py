@@ -8,6 +8,7 @@ from collections import Counter
 
 trainingFile="data/train/training.twitter.json.gz" #File with  all ~9 Million training tweets
 placesFile='data/train/training.json.gz'           #Place annotation provided by task organisers
+modelPath='data/w-nut-latest/binaries/'            #Place to store the results
 
 #Parser Twitter-JSON
 tweetToTextMapping= {} # Map<Twitter-ID; tweet>
@@ -206,17 +207,17 @@ trainCreatedAt = timeEncoder.transform(trainCreatedAt)
 #####Save result of preprocessing
 import pickle
 #1.) Save relevant processing data
-filehandler = open(b"data/w-nut-latest/binaries/processors.obj","wb")
+filehandler = open(modelPath +"processors.obj","wb")
 pickle.dump((descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, timeEncoder, placeMedian, classes, colnames), filehandler)
 filehandler.close()
 
 #Save important variables
-filehandler = open(b"data/w-nut-latest/binaries/vars.obj","wb")
+filehandler = open(modelPath +"vars.obj","wb")
 pickle.dump((MAX_DESC_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX_NAME_SEQUENCE_LENGTH, MAX_TZ_SEQUENCE_LENGTH), filehandler)
 filehandler.close()
 
 #2.) Save converted training data
-filehandler = open(b"data/w-nut-latest/binaries/data.obj","wb")
+filehandler = open(modelPath +"data.obj","wb")
 pickle.dump((trainDescription,  trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt), filehandler, protocol=4)
 filehandler.close()
 
