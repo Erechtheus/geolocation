@@ -129,7 +129,7 @@ sourceHistory = linkModel.fit(np.concatenate((trainDomain, trainTld), axis=1), c
                     verbose=verbosity
                     )
 print("linkModel finished after " +str(time.time() - start))
-linkModel.save('data/w-nut-latest/models/linkModel.h5')
+linkModel.save(modelPath +'linkModel.h5')
 
 
 #####################
