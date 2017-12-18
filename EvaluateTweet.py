@@ -45,7 +45,7 @@ final_modelTrainable.load_weights(modelPath+"finalmodelWeight2.h5")
 
 
 ##Evaluate model
-def eval(predictions, type='TWEET', predictToFile='/home/philippe/PycharmProjects/deepLearning/predictions.json'):
+def eval(predictions, type='TWEET', predictToFile='predictionsTmp.json'):
     out_file = open(predictToFile, "w")
     for i in range(predictions.shape[0]):
         id = testIDs[i]

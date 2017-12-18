@@ -38,7 +38,7 @@ final_model = model_from_yaml(loaded_model_yaml)
 final_model.load_weights(modelPath+"finalmodelWeight2.h5")
 
 ##Evaluate model, this the the most likely place
-def evalMax(predictions, type='USER', predictToFile='/home/philippe/PycharmProjects/deepLearning/predictionsUser.json'):
+def evalMax(predictions, type='USER', predictToFile='predictionsUserTmp.json'):
     out_file = open(predictToFile, "w")
     for userHash in set(testUserIds):
         indices = [i for i, x in enumerate(testUserIds) if x == userHash]
