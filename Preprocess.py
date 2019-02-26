@@ -1,16 +1,22 @@
 ##Performs preprocessing for twitter-training data
-
+from keras.preprocessing.text import Tokenizer
+from keras.preprocessing.sequence import pad_sequences
+from sklearn.preprocessing import LabelEncoder
 import numpy as np
 import gzip
 import json
 from representation import parseJsonLine, Place, extractPreprocessUrl
 from collections import Counter
+import pickle
+import gc
+import string
+
 
 trainingFile="data/train/training.twitter.json.gz" #File with  all ~9 Million training tweets
 placesFile='data/train/training.json.gz'           #Place annotation provided by task organisers
-modelPath='data/w-nut-latest/binaries/'            #Place to store the results
+binaryPath= 'data/binaries/'            #Place to store the results
 
-#Parser Twitter-JSON
+#Parser Twitter-JSON; loads all tweets into RAM (not very memory efficient!)
 tweetToTextMapping= {} # Map<Twitter-ID; tweet>
 with gzip.open(trainingFile,'rb') as file:
     for line in file:
@@ -80,18 +86,13 @@ for key in tweetToTextMapping:
 
 #Delete tweets and run gc
 del(tweetToTextMapping)
-import gc
 gc.collect()
 
 
 #########Preprocessing of data
-from keras.preprocessing.text import Tokenizer
-from keras.preprocessing.sequence import pad_sequences
-
 #1.) Binarize > 3000 target classes into one hot encoding
 print(str(len(set(trainLabels))) +" different places known") #Number of different classes
 
-from sklearn.preprocessing import LabelEncoder
 classEncoder = LabelEncoder()
 classEncoder.fit(trainLabels)
 
@@ -104,7 +105,6 @@ for i in range(len(classes)):
 
 
 #2.) Tokenize texts
-import string
 def my_filter():
     f = string.punctuation
     f += '\t\n\r…”'
@@ -205,19 +205,17 @@ timeEncoder.fit(trainCreatedAt)
 trainCreatedAt = timeEncoder.transform(trainCreatedAt)
 
 #####Save result of preprocessing
-import pickle
 #1.) Save relevant processing data
-filehandler = open(modelPath +"processors.obj","wb")
+filehandler = open(binaryPath + "processors.obj", "wb")
 pickle.dump((descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, timeEncoder, placeMedian, classes, colnames), filehandler)
 filehandler.close()
 
 #Save important variables
-filehandler = open(modelPath +"vars.obj","wb")
+filehandler = open(binaryPath + "vars.obj", "wb")
 pickle.dump((MAX_DESC_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX_NAME_SEQUENCE_LENGTH, MAX_TZ_SEQUENCE_LENGTH), filehandler)
 filehandler.close()
 
 #2.) Save converted training data
-filehandler = open(modelPath +"data.obj","wb")
+filehandler = open(binaryPath + "data.obj", "wb")
 pickle.dump((trainDescription,  trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt), filehandler, protocol=4)
 filehandler.close()
-
