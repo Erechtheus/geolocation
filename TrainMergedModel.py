@@ -1,14 +1,25 @@
 #Combine model and don't retrain trained models;
 import pickle
+
+import datetime
 import numpy as np
 from keras.models import load_model
-from keras.layers import LSTM, Bidirectional, Dropout, InputLayer, Dense, Merge, Reshape, Conv1D
-from keras.models import Sequential
+from keras.layers import Dense, concatenate, BatchNormalization
 import time
 
+import os
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
+
 #############################
-binaryPath="/media/philippe/5f695998-f5a5-4389-a2d8-4cf3ffa1288a/data/w-nut-latest/binaries/"
-modelPath="data/w-nut-latest/models/"
+binaryPath= 'data/binaries/'    #Place where the serialized training data is
+modelPath= 'data/models/'       #Place to store the models
+
+#Random seed
+from numpy.random import seed
+seed(2019*2*5)
+from tensorflow import set_random_seed
+set_random_seed(2019*2*5)
 
 # Load the eight individual models
 descriptionBranch = load_model(modelPath +'descriptionBranchNorm.h5')
@@ -125,10 +136,11 @@ for layer in model10.layers:
     layer.trainable = False
 
 
-merged = Merge([model1, model2a, model2b, model3, model4, model5, model6, model7, model8, model9, model10], mode='concat', name="merged")
-final_model = Sequential()
-final_model.add(merged)
-final_model.add(Dense(len(set(classes)), activation='softmax'))
+mergedBranch = concatenate([model1.output, model2a.output, model2b.output, model3.output, model4.output, model5.output, model6.output, model7.output, model8.output, model9.output, model10.output], axis=-1)
+mergedBranch = BatchNormalization(name="finalNorm")(mergedBranch)
+predictions = Dense(len(set(classes)), activation='softmax', name="predictions")(mergedBranch)
+
+final_model = Model(inputs=[model1.input, model2a.input, model2b.input, model3.input, model4.input, model5.input, model6.input, model7.input, model8.input, model9.input, model10.input], outputs=predictions)
 final_model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
 
@@ -139,7 +151,7 @@ finalHistory = final_model.fit([trainDescription, trainDomain, trainTld, trainLo
                     verbose=1
                     )
 end = time.time()
-print("final_model finished after " +str(end - start))
+print("final_model finished after " +str(datetime.timedelta(seconds=time.time() - start)))
 
 
 model_yaml = final_model.to_yaml()
