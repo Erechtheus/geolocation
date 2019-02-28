@@ -8,6 +8,8 @@ Geolocation prediction for a given Tweet, or a short text. The system trains a n
 ## Download 
 Source code from this repository has been published here (https://github.com/Erechtheus/geolocation/releases). 
 - [Version 1.0](https://github.com/Erechtheus/geolocation/releases/tag/V1.0) refers to the original code, which has been presented in our GSCL paper. 
+- [Version 2.0](https://github.com/Erechtheus/geolocation/releases/tag/2.0) uses keras functional API (instead of Keras sequential API). This code runs with Keras Version 2, whereas the original release worked with Keras Version 1.
+
 
 ## Train and apply models
 To train models, training data (tweets and gold labels) needs to be retrieved. As Tweets can not be shared directly, we refer to the [WNUT'16 workshop page](http://noisy-text.github.io/2016/geo-shared-task.html) for further information.
