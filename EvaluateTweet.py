@@ -1,4 +1,8 @@
 #Load stuff:
+#import os
+#os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
+#os.environ["CUDA_VISIBLE_DEVICES"] = ""
+
 import pickle
 import numpy as np
 import json
@@ -10,10 +14,11 @@ from keras.models import model_from_yaml
 
 #############################
 # Load the eight individual models
-modelPath="/media/philippe/5f695998-f5a5-4389-a2d8-4cf3ffa1288a/data/w-nut-latest/models/"
-binariesPath="/media/philippe/5f695998-f5a5-4389-a2d8-4cf3ffa1288a/data/w-nut-latest/binaries/"
-testFile="/media/philippe/5f695998-f5a5-4389-a2d8-4cf3ffa1288a/data/w-nut-latest/test/data/test.tweet.json"
-goldFile='/media/philippe/5f695998-f5a5-4389-a2d8-4cf3ffa1288a/data/w-nut-latest/test/test_labels/oracle.tweet.json'
+binaryPath= 'data/binaries/'    #Place where the serialized training data is
+modelPath= 'data/models/'       #Place to store the models
+
+testFile="data/test/data/test.tweet.json"
+goldFile='data/test/test_labels/oracle.tweet.json'
 
 descriptionBranch = load_model(modelPath +'descriptionBranchNorm.h5')
 linkModel = load_model(modelPath +'linkModel.h5') #Full link model
@@ -67,10 +72,10 @@ def eval(predictions, type='TWEET', predictToFile='predictionsTmp.json'):
 
 #############################
 #Evaluate the models on the test data
-file = open(binariesPath +"processors.obj",'rb')
+file = open(binaryPath +"processors.obj",'rb')
 descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, timeEncoder, placeMedian, classes, colnames = pickle.load(file)
 
-file = open(binariesPath +"vars.obj",'rb')
+file = open(binaryPath +"vars.obj",'rb')
 MAX_DESC_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX_NAME_SEQUENCE_LENGTH, MAX_TZ_SEQUENCE_LENGTH = pickle.load(file)
 
 def roundMinutes(x, base=15):
