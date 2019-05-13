@@ -60,7 +60,7 @@ class Media:
 
 #Python representation of a tweet
 class Instance:
-    def __init__(self, text="", place="", timezone=None, utcOffset=None, location=None, source=None, media=None, id=None, urls=None, name=None, description = None, userName=None, userLanguage=None, createdAt =None):
+    def __init__(self, text="", place="", timezone=None, utcOffset=None, location=None, source=None, media=None, id=None, urls=None, name=None, description = None, userId=None, userLanguage=None, createdAt =None, userMentions=None):
         self._text = text               # The text of the tweet
         self._place = place             # The place if known
         self._timezone = timezone       # Timezone as string (e.g., Hawaii, Baghdad, Pacific Time, ...)
@@ -70,11 +70,15 @@ class Instance:
         self._media = media             # Media information
         self._id = id                   # ID
         self._urls = urls               # URLS
-        self._name = name               # Username
+        self._name = name               # Username using user self description
         self._description = description #Description
-        self._userName = userName
+        self._userId = userId           # Username using user unique twitter ID
         self._userLanguage= userLanguage #he user’s self-declared user interface language.
         self._createdAt = createdAt     #When has the tweet been sent?
+        self._userMentions = userMentions #IDs of other userMentions
+
+    def __str__(self):
+        return "Tweet '" + str(self._id) +"' userId ='" + str(self._userId) +"' usermentions='" +str(self._userMentions) #+"' text = '" + str(self._text) + "'"
 
     @property
     def text(self):
@@ -121,8 +125,8 @@ class Instance:
         return self._description
 
     @property
-    def userName(self):
-        return self._userName
+    def userId(self):
+        return self._userId
 
     @property
     def createdAt(self):
@@ -131,6 +135,10 @@ class Instance:
     @property
     def userLanguage(self):
         return self._userLanguage
+
+    @property
+    def userMentions(self):
+        return self._userMentions
 
     @text.setter
     def text(self, value):
@@ -176,9 +184,9 @@ class Instance:
     def description(self, value):
         self._description = value
 
-    @userName.setter
-    def userName(self, value):
-        self._userName = value
+    @userId.setter
+    def userId(self, value):
+        self._userId = value
 
     @userLanguage.setter
     def userLanguage(self, value):
@@ -187,6 +195,10 @@ class Instance:
     @createdAt.setter
     def createdAt(self, value):
         self._createdAt = value
+
+    @userMentions.setter
+    def userMentions(self, value):
+        self._userMentions = value
 
 
 
@@ -197,7 +209,8 @@ def parseJsonLine( line ):
     #normalized = unicodedata.normalize('NFKD', tweet['text']).encode('ASCII', 'ignore').decode('UTF-8') 
     normalized = tweet['text']
     tweetTime = datetime.strptime(tweet['created_at'], '%a %b %d %H:%M:%S +0000 %Y') #
-    instance = Instance(text=normalized, timezone=tweet['user']['time_zone'],  location=tweet['user']['location'], name=tweet['user']['name'], utcOffset = tweet['user']['utc_offset'], description = tweet['user']['description'], userLanguage = tweet['user']['lang'], createdAt = tweetTime)
+    instance = Instance(text=normalized, timezone=tweet['user']['time_zone'],  location=tweet['user']['location'], name=tweet['user']['name'],
+                        utcOffset = tweet['user']['utc_offset'], description = tweet['user']['description'], userLanguage = tweet['user']['lang'], createdAt = tweetTime)
 
     #Convert UTC from hours to seconds
     utcOffset = tweet['user']['utc_offset']
@@ -210,12 +223,21 @@ def parseJsonLine( line ):
         instance._id =  tweet['id']
     elif('hashed_tweet_id' in tweet):
         instance._id = tweet['hashed_tweet_id']
+    else:
+        print("No twitter id")
 
-    if ('user_id' in tweet):
-        instance._userName = tweet['user_id']
-
+    if ('id_str' in tweet):
+        instance._userId = tweet['user']['id_str']
     elif('hashed_user_id' in tweet):
-        instance._userName = tweet['hashed_user_id']
+        instance._userId = tweet['hashed_user_id']
+    else:
+        print("No user id")
+
+    mentions = []
+    userMentions = tweet['entities']['user_mentions']
+    for mention in userMentions:
+        mentions.append(mention['id_str'])
+    instance.userMentions = mentions
 
     #Extract relevant information from source
     source = tweet['source']
