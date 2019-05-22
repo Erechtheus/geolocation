@@ -19,6 +19,8 @@ from sklearn.preprocessing import LabelEncoder
 import numpy as np
 import gzip
 import json
+
+from Preprocess import roundMinutes
 from representation import parseJsonLine, Place, extractPreprocessUrl
 from tensorflow.python.keras.utils import Sequence
 from collections import Counter
@@ -48,7 +50,7 @@ MAX_DESC_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX
 # create the model
 batch_size = 256
 nb_epoch = 5
-verbosity=1
+verbosity=2
 
 descriptionEmbeddings = 100
 locEmbeddings = 50
@@ -74,18 +76,25 @@ numberOfTrainingsamples=9127900 #TODO zcat training.twitter.json.gz  | wc -l
 def batch_generator(twitterFile, goldstandard, batch_size=64):
     while True: #TODO: needed?
         with gzip.open(twitterFile, 'rb') as file:
-            trainDescriptions = []
-            trainLabels = []
+            trainDescriptions = []; trainLinks = []; trainLocation = []; trainSource = []; trainTexts = [];  trainUserName = []; trainTZ = []; trainUtc = []; trainUserLang = []; trainCreatedAt = [];  trainUserMentions = []; trainLabels = []
             for line in file:
 
                 if len(trainDescriptions) == batch_size:
-                    trainDescriptions = []
-                    trainLabels = []
+                    trainDescriptions = []; trainLinks = []; trainLocation = []; trainSource = []; trainTexts = []; trainUserName = []; trainTZ = []; trainUtc = []; trainUserLang = []; trainCreatedAt = []; trainUserMentions = []; trainLabels = []
 
                 instance = parseJsonLine(line.decode('utf-8'))
 
-                trainDescription = str(instance.description)
-                trainDescriptions.append(trainDescription)
+                trainDescriptions.append(str(instance.description))
+                trainLinks.append(extractPreprocessUrl(instance.urls))
+                trainLocation.append(str(instance.location))
+                trainSource.append(str(instance.source))
+                trainTexts.append(instance.text)
+                trainUserName.append(str(instance.name))
+                trainTZ.append(str(instance.timezone))
+                trainUtc.append(str(instance.utcOffset))
+                trainUserLang.append(str(instance.userLanguage))
+                trainCreatedAt.append(str(instance.createdAt.hour) + "-" + str(roundMinutes(instance.createdAt.minute)))
+                trainUserMentions.append(instance.userMentions)
 
                 trainLabel = goldstandard[instance.id]._name
                 trainLabels.append(trainLabel)
@@ -99,11 +108,84 @@ def batch_generator(twitterFile, goldstandard, batch_size=64):
                     trainDescriptions = np.asarray(trainDescriptions)  # Convert to ndArraytop
                     trainDescriptions = pad_sequences(trainDescriptions, maxlen=MAX_DESC_SEQUENCE_LENGTH)
 
+                    # Link-Mentions
+                    categorial = np.zeros((len(trainDomain), len(domainEncoder.classes_)), dtype="bool")
+                    for i in range(len(trainDomain)):
+                        categorial[i, trainDomain[i]] = True
+                    trainDomain = categorial
+
+                    categorial = np.zeros((len(trainTld), len(tldEncoder.classes_)), dtype="bool")
+                    for i in range(len(trainTld)):
+                        categorial[i, trainTld[i]] = True
+                    trainTld = categorial
+
+                    # Location
+                    trainLocation = locationTokenizer.texts_to_sequences(trainLocation)
+                    trainLocation = np.asarray(trainLocation)  # Convert to ndArraytop
+                    trainLocation = pad_sequences(trainLocation, maxlen=MAX_LOC_SEQUENCE_LENGTH)
+
+                    # Source
+                    trainSource = sourceEncoder.transform(trainSource)
+                    categorial = np.zeros((len(trainSource), len(sourceEncoder.classes_)), dtype="bool")
+                    for i in range(len(trainSource)):
+                        categorial[i, trainSource[i]] = True
+                    trainSource = categorial
+
+                    #Text Tweet
+                    trainTexts = textTokenizer.texts_to_sequences(trainTexts)
+                    trainTexts = np.asarray(trainTexts)  # Convert to ndArraytop
+                    trainTexts = pad_sequences(trainTexts, maxlen=MAX_TEXT_SEQUENCE_LENGTH)
+
+                    #User Name
+                    trainUserName = nameTokenizer.texts_to_sequences(trainUserName)
+                    trainUserName = np.asarray(trainUserName)  # Convert to ndArraytop
+                    trainUserName = pad_sequences(trainUserName, maxlen=MAX_NAME_SEQUENCE_LENGTH)
+
+                    #Time Zone
+                    trainTZ = timeZoneTokenizer.texts_to_sequences(trainTZ)
+                    trainTZ = np.asarray(trainTZ)  # Convert to ndArraytop
+                    trainTZ = pad_sequences(trainTZ, maxlen=MAX_TZ_SEQUENCE_LENGTH)
+
+                    # UTC
+                    trainUtc = utcEncoder.transform(trainUtc)
+                    categorial = np.zeros((len(trainUtc), len(utcEncoder.classes_)), dtype="bool")
+                    for i in range(len(trainUtc)):
+                        categorial[i, trainUtc[i]] = True
+                    trainUtc = categorial
+
+                    # User-Language (63 languages)
+                    trainUserLang = langEncoder.transform(trainUserLang)
+                    categorial = np.zeros((len(trainUserLang), len(langEncoder.classes_)), dtype="bool")
+                    for i in range(len(trainUserLang)):
+                        categorial[i, trainUserLang[i]] = True
+                    trainUserLang = categorial
+
+                    # Tweet-Time (120 steps)
+                    trainCreatedAt = timeEncoder.transform(trainCreatedAt)
+                    categorial = np.zeros((len(trainCreatedAt), len(timeEncoder.classes_)), dtype="bool")
+                    for i in range(len(trainCreatedAt)):
+                        categorial[i, trainCreatedAt[i]] = True
+                    trainCreatedAt = categorial
+
                     # class label
                     classes = classEncoder.transform(trainLabels)
 
-                    yield trainDescriptions, classes
-                    # yield ({'inputDescription': trainDescriptions, 'input_2': x2}, {'output': y}) #TODO Use this in order to produce all relevant parts
+                    #yield trainDescriptions, classes
+                    yield ({'inputDescription': trainDescriptions,
+                            'trainDomain': trainDomain,
+                            'trainTld':trainTld,
+                            'inputLocation': trainLocation,
+                             'inputSource': trainSource,
+                            'inputText' : trainTexts,
+                            'inputUser' : trainUserName,
+                            'inputTimeZone' : trainTZ,
+                            'inputUTC' :trainUtc,
+                            'inputUserLang' : trainUserLang,
+                            'inputCreatedAt': trainCreatedAt
+                            },
+                           #{'output': y}
+                           classes
+                           ) #TODO Use this in order to produce all relevant parts
 
 
 #1.) Description Model
@@ -131,29 +213,268 @@ descriptionHistory = descriptionModel.fit_generator(generator=batch_generator(tw
 print("descriptionBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
 descriptionModel.save(modelPath +'descriptionBranchNorm.h5')
 
+#2a.) Link Model for Domain
+domainBranchI = Input(shape=(len(domainEncoder.classes_),), name="inputDomain")
+domainBranch = Dense(int(math.log2(len(domainEncoder.classes_))), input_shape=(len(domainEncoder.classes_),), activation='relu')(domainBranchI)
+domainBranch = BatchNormalization()(domainBranch)
+domainBranch = Dropout(0.2, name="domainName")(domainBranch)
+domainBranchO = Dense(len(set(classes)), activation='softmax')(domainBranch)
+
+domainModel = Model(inputs=domainBranchI, outputs=domainBranchO)
+domainModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+start = time.time()
+sourceHistory = domainModel.fit_generator(generator=batch_generator(twitterFile=trainingFile, goldstandard=idToGold, batch_size=batch_size),
+                    epochs=nb_epoch, samples_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
+                    verbose=verbosity
+                    )
+print("tldBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
+domainModel.save(modelPath + 'domainBranch.h5')
 
 
+
+#2b.) Link Model for TLD
+tldBranchI = Input(shape=(len(tldEncoder.classes_),), name="inputTld")
+tldBranch = Dense(int(math.log2(len(tldEncoder.classes_))), input_shape=(len(tldEncoder.classes_)), activation='relu')(tldBranchI)
+tldBranch = BatchNormalization()(tldBranch)
+tldBranch = Dropout(0.2, name="tld")(tldBranch)
+tldBranchO = Dense(len(set(classes)), activation='softmax')(tldBranch)
+
+tldBranchModel = Model(inputs=tldBranchI, outputs=tldBranchO)
+tldBranchModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+start = time.time()
+sourceHistory = tldBranchModel.fit_generator(generator=batch_generator(twitterFile=trainingFile, goldstandard=idToGold, batch_size=batch_size),
+                    epochs=nb_epoch, samples_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
+                    verbose=verbosity
+                    )
+print("tldBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
+tldBranchModel.save(modelPath + 'tldBranch.h5')
+
+
+#2c.)Merged Model
+#TODO USe concat to combine the two inputs
 """
-class mygenerator(Sequence):
+linkBranchI= Input(shape=((len(domainEncoder.classes_) + len(tldEncoder.classes_)),), name="inputLink")
+linkBranch = Dense(int(math.log2(len(domainEncoder.classes_) + len(tldEncoder.classes_))), input_shape=((len(domainEncoder.classes_) + len(tldEncoder.classes_)),), activation='relu')(linkBranchI)
+linkBranch = BatchNormalization()(linkBranch)
+linkBranch = Dropout(0.2, name="linkModel")(linkBranch)
+linkBranchO = Dense(len(set(classes)), activation='softmax')(linkBranch)
 
-    def __init__(self, x_set, y_set, batch_size):
-        self.x, self.y = x_set, y_set
-        self.batch_size = batch_size
+linkModel = Model(inputs=linkBranchI, outputs=linkBranchO)
+linkModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+start = time.time()
+sourceHistory = linkModel.fit_generator(generator=batch_generator(twitterFile=trainingFile, goldstandard=idToGold, batch_size=batch_size),
+                    epochs=nb_epoch, samples_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
+                    verbose=verbosity
+                    )
+print("linkModel finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
+linkModel.save(modelPath + 'linkModel.h5')
+"""
+#####################
+#3.) location Model
+locationBranchI = Input(shape=(None,), name="inputLocation")
+locationBranch = Embedding(locationTokenizer.num_words,
+                             locEmbeddings,
+                    input_length=MAX_LOC_SEQUENCE_LENGTH,
+                    mask_zero=True
+                    )(locationBranchI)
+locationBranch = SpatialDropout1D(rate=0.2)(locationBranch)
+locationBranch = BatchNormalization()(locationBranch)
+locationBranch = Dropout(0.2)(locationBranch)
+locationBranch = LSTM(units=30)(locationBranch)
+locationBranch = BatchNormalization()(locationBranch)
+locationBranch = Dropout(0.2, name="location")(locationBranch)
+locationBranchO = Dense(len(set(classes)), activation='softmax')(locationBranch)
 
-    def __len__(self):
-        return int(np.ceil(len(self.x) / float(self.batch_size)))
+locationModel = Model(inputs=locationBranchI, outputs=locationBranchO)
+locationModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+start = time.time()
+locationHistory = locationModel.fit_generator(generator=batch_generator(twitterFile=trainingFile, goldstandard=idToGold, batch_size=batch_size),
+                    epochs=nb_epoch, samples_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
+                    verbose=verbosity
+                    )
+print("locationHistory finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
+locationModel.save(modelPath +'locationBranchNorm.h5')
 
-    def 
 
-    def __getitem__(self, idx):
-        batch_x = self.x[idx * self.batch_size:(idx + 1) * self.batch_size]
-        batch_y = self.y[idx * self.batch_size:(idx + 1) * self.batch_size]
 
-        # read your data here using the batch lists, batch_x and batch_y
-#        x = [my_readfunction(filename) for filename in batch_x]
-#        y = [my_readfunction(filename) for filename in batch_y]
-#        return np.array(x), np.array(y)
+#####################
+#4.) Source Mode
+sourceBranchI = Input(shape=(len(sourceEncoder.classes_),), name="inputSource")
+sourceBranch = Dense(int(math.log2(len(sourceEncoder.classes_))), input_shape=(len(sourceEncoder.classes_),), activation='relu')(sourceBranchI)
+sourceBranch = BatchNormalization()(sourceBranch)
+sourceBranch = Dropout(0.2, name="source")(sourceBranch)
+sourceBranchO = Dense(len(set(classes)), activation='softmax')(sourceBranch)
 
-trainGenerator = mygenerator(x_set=trainingFile, y_set=idToGold)
-trainGenerator.__getitem__(10)
+sourceModel = Model(inputs=sourceBranchI, outputs=sourceBranchO)
+sourceModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+start = time.time()
+sourceHistory = sourceModel.fit_generator(generator=batch_generator(twitterFile=trainingFile, goldstandard=idToGold, batch_size=batch_size),
+                    epochs=nb_epoch, samples_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
+                    verbose=verbosity
+                    )
+print("sourceBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
+sourceModel.save(modelPath +'sourceBranch.h5')
+
+
+
+#####################
+#5.) Text Model
+textBranchI = Input(shape=(None,), name="inputText")
+textBranch = Embedding(textTokenizer.num_words,
+                         textEmbeddings,
+                        input_length=MAX_TEXT_SEQUENCE_LENGTH,
+                        mask_zero=True
+                         )(textBranchI)
+textBranch = SpatialDropout1D(rate=0.2)(textBranch)
+textBranch = BatchNormalization()(textBranch)
+textBranch = Dropout(0.2)(textBranch)
+textBranch = LSTM(units=30)(textBranch)
+textBranch = BatchNormalization()(textBranch)
+textBranch = Dropout(0.2, name="text")(textBranch)
+textBranchO = Dense(len(set(classes)), activation='softmax')(textBranch)
+
+textModel = Model(inputs=textBranchI, outputs=textBranchO)
+textModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+start = time.time()
+textHistory = textModel.fit_generator(generator=batch_generator(twitterFile=trainingFile, goldstandard=idToGold, batch_size=batch_size),
+                    epochs=nb_epoch, samples_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
+                    verbose=verbosity
+                    )
+print("textBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
+textModel.save(modelPath +'textBranchNorm.h5')
+
+
+
+#####################
+# 6.) Name Model
+nameBranchI = Input(shape=(None,), name="inputName")
+nameBranch = Embedding(nameTokenizer.num_words,
+                         nameEmbeddings,
+                         input_length=MAX_NAME_SEQUENCE_LENGTH,
+                        mask_zero=True
+                         )(nameBranchI)
+nameBranch = SpatialDropout1D(rate=0.2)(nameBranch)
+nameBranch = BatchNormalization()(nameBranch)
+nameBranch = Dropout(0.2)(nameBranch)
+nameBranch = LSTM(units=30)(nameBranch)
+nameBranch = BatchNormalization()(nameBranch)
+nameBranch = Dropout(0.2, name="username")(nameBranch)
+nameBranchO = Dense(len(set(classes)), activation='softmax')(nameBranch)
+
+nameModel = Model(inputs=nameBranchI, outputs=nameBranchO)
+nameModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+start = time.time()
+nameHistory = nameModel.fit_generator(generator=batch_generator(twitterFile=trainingFile, goldstandard=idToGold, batch_size=batch_size),
+                    epochs=nb_epoch, samples_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
+                    verbose=verbosity
+                    )
+print("nameBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
+nameModel.save(modelPath +'nameBranchNorm.h5')
+
+
+#####################
+# 7.) TimeZone Model
+tzBranchI = Input(shape=(None,), name="inputTimeZone")
+tzBranch = Embedding(timeZoneTokenizer.num_words,
+                       tzEmbeddings,
+                       input_length=MAX_TZ_SEQUENCE_LENGTH,
+                        mask_zero=True
+                       )(tzBranchI)
+tzBranch = SpatialDropout1D(rate=0.2)(tzBranch)
+tzBranch = BatchNormalization()(tzBranch)
+tzBranch = Dropout(0.2)(tzBranch)
+tzBranch = LSTM(units=30)(tzBranch)
+tzBranch = BatchNormalization()(tzBranch)
+tzBranch = Dropout(0.2, name="timezone")(tzBranch)
+tzBranchO = Dense(len(set(classes)), activation='softmax')(tzBranch)
+
+tzBranchModel = Model(inputs=tzBranchI, outputs=tzBranchO)
+tzBranchModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+start = time.time()
+tzHistory = tzBranchModel.fit_generator(generator=batch_generator(twitterFile=trainingFile, goldstandard=idToGold, batch_size=batch_size),
+                    epochs=nb_epoch, samples_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
+                    verbose=verbosity
+                    )
+print("tzBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
+tzBranchModel.save(modelPath +'tzBranchNorm.h5')
+
+
+
+#####################
+# 8.) UTC Model
+utcBranchI = Input(shape=(len(utcEncoder.classes_),), name="inputUTC")
+utcBranch =  Dense(int(math.log2(len(utcEncoder.classes_))), activation='relu')(utcBranchI)
+utcBranch = BatchNormalization()(utcBranch)
+utcBranch = Dropout(0.2, name="utc")(utcBranch)
+utcBranchO = Dense(len(set(classes)), activation='softmax')(utcBranch)
+
+utcBranchModel = Model(inputs=utcBranchI, outputs=utcBranchO)
+utcBranchModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+start = time.time()
+utcHistory = utcBranchModel.fit_generator(generator=batch_generator(twitterFile=trainingFile, goldstandard=idToGold, batch_size=batch_size),
+                    epochs=nb_epoch, samples_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
+                    verbose=verbosity
+                    )
+print("utcBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
+utcBranchModel.save(modelPath +'utcBranch.h5')
+
+
+#9) "User Language
+userLangBranchI = Input(shape=( len(langEncoder.classes_),), name="inputUserLang")
+userLangBranch = Dense(int(math.log2( len(langEncoder.classes_))),input_shape=( len(langEncoder.classes_),), activation='relu')(userLangBranchI)
+userLangBranch = BatchNormalization()(userLangBranch)
+userLangBranch = Dropout(0.2, name="userLang")(userLangBranch)
+userLangBranchO = Dense(len(set(classes)), activation='softmax')(userLangBranch)
+
+userLangModel = Model(inputs=userLangBranchI, outputs=userLangBranchO)
+userLangModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+start = time.time()
+userLangHistory = userLangModel.fit_generator(generator=batch_generator(twitterFile=trainingFile, goldstandard=idToGold, batch_size=batch_size),
+                    epochs=nb_epoch, samples_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
+                    verbose=verbosity
+                    )
+print("userLangBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
+userLangModel.save(modelPath +'userLangBranch.h5')
+
+
+#10) #Tweet-Time (120)
+tweetTimeBranchI = Input(shape=(len(timeEncoder.classes_),), name="inputTweetTime")
+tweetTimeBranch = Dense(int(math.log2(len(timeEncoder.classes_))), input_shape=(len(timeEncoder.classes_),), activation='relu')(tweetTimeBranchI)
+tweetTimeBranch = BatchNormalization()(tweetTimeBranch)
+tweetTimeBranch = Dropout(0.2, name="tweetTime")(tweetTimeBranch)
+tweetTimeBranchO = Dense(len(set(classes)), activation='softmax')(tweetTimeBranch)
+
+tweetTimeModel = Model(inputs=tweetTimeBranchI, outputs=tweetTimeBranchO)
+tweetTimeModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+start = time.time()
+userLangHistory = tweetTimeModel.fit_generator(generator=batch_generator(twitterFile=trainingFile, goldstandard=idToGold, batch_size=batch_size),
+                    epochs=nb_epoch, samples_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
+                    verbose=verbosity
+                    )
+print("tweetTimeBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
+tweetTimeModel.save(modelPath +'tweetTimeBranch.h5')
+
+
+
+#11) Merged sequential model
+"""
+trainData = np.concatenate((trainDomain, trainTld, trainSource, trainUserLang, trainCreatedAt), axis=1)
+
+categorialBranchI = Input(shape=(trainData.shape[1],), name="inputCategorial")
+categorialBranch = Dense(int(math.log2(trainData.shape[1])), input_shape=(trainData.shape[1],), activation='relu')(categorialBranchI)
+categorialBranch = BatchNormalization()(categorialBranch)
+categorialBranch = Dropout(0.2, name="categorialModel")(categorialBranch)
+categorialBranchO = Dense(len(set(classes)), activation='softmax')(categorialBranch)
+
+
+categorialModel = Model(inputs=categorialBranchI, outputs=categorialBranchO)
+categorialModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+start = time.time()
+
+categorialModelHistory = categorialModel.fit(trainData, classes,
+                                              epochs=nb_epoch, batch_size=batch_size,
+                                              verbose=verbosity
+                                              )
+print("categorialModel finished after " +str(datetime.timedelta(time.time() - start)))
+categorialModel.save(modelPath + 'categorialModel.h5')
 """
