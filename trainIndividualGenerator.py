@@ -3,8 +3,6 @@
 #os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
 #os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
-import pickle
-import numpy as np
 import time
 from keras.layers import Dropout, Dense, BatchNormalization, SpatialDropout1D, LSTM, concatenate
 from keras.layers.embeddings import Embedding
@@ -13,27 +11,17 @@ import datetime
 from keras import Input
 from keras import Model
 
-from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
-from sklearn.preprocessing import LabelEncoder
 import numpy as np
 import gzip
 import json
 
-from Preprocess import roundMinutes
 from representation import parseJsonLine, Place, extractPreprocessUrl
-from tensorflow.python.keras.utils import Sequence
-from collections import Counter
 import pickle
-import gc
-import string
 
-
-#Random seed
-from numpy.random import seed
-seed(2019*2*5)
-from tensorflow import set_random_seed
-set_random_seed(2019*2*5)
+#Rounds minutes to 15 Minutes ranges
+def roundMinutes(x, base=15):
+    return int(base * round(float(x)/base))
 
 binaryPath= 'data/binaries/'    #Place where the serialized training data is
 modelPath= 'data/models/'       #Place to store the models
@@ -109,14 +97,18 @@ def batch_generator(twitterFile, goldstandard, batch_size=64):
                     trainDescriptions = pad_sequences(trainDescriptions, maxlen=MAX_DESC_SEQUENCE_LENGTH)
 
                     # Link-Mentions
+                    trainDomain = list(map(lambda x: x[0], trainLinks))  # URL-Domain
                     categorial = np.zeros((len(trainDomain), len(domainEncoder.classes_)), dtype="bool")
                     for i in range(len(trainDomain)):
-                        categorial[i, trainDomain[i]] = True
+                        if trainDomain[i] in domainEncoder.classes_:
+                            categorial[i, domainEncoder.transform([trainDomain[i]])[0]] = True
                     trainDomain = categorial
 
+                    trainTld = list(map(lambda x: x[1], trainLinks))  # Url suffix; top level domain
                     categorial = np.zeros((len(trainTld), len(tldEncoder.classes_)), dtype="bool")
                     for i in range(len(trainTld)):
-                        categorial[i, trainTld[i]] = True
+                        if trainTld[i] in tldEncoder.classes_:
+                            categorial[i, tldEncoder.transform([trainTld[i]])[0]] = True
                     trainTld = categorial
 
                     # Location
@@ -172,20 +164,20 @@ def batch_generator(twitterFile, goldstandard, batch_size=64):
 
                     #yield trainDescriptions, classes
                     yield ({'inputDescription': trainDescriptions,
-                            'trainDomain': trainDomain,
-                            'trainTld':trainTld,
+                            'inputDomain': trainDomain,
+                            'inputTld':trainTld,
                             'inputLocation': trainLocation,
-                             'inputSource': trainSource,
+                            'inputSource': trainSource,
                             'inputText' : trainTexts,
                             'inputUser' : trainUserName,
                             'inputTimeZone' : trainTZ,
                             'inputUTC' :trainUtc,
                             'inputUserLang' : trainUserLang,
-                            'inputCreatedAt': trainCreatedAt
+                            'inputTweetTime': trainCreatedAt
                             },
                            #{'output': y}
                            classes
-                           ) #TODO Use this in order to produce all relevant parts
+                           )
 
 
 #1.) Description Model
@@ -234,7 +226,7 @@ domainModel.save(modelPath + 'domainBranch.h5')
 
 #2b.) Link Model for TLD
 tldBranchI = Input(shape=(len(tldEncoder.classes_),), name="inputTld")
-tldBranch = Dense(int(math.log2(len(tldEncoder.classes_))), input_shape=(len(tldEncoder.classes_)), activation='relu')(tldBranchI)
+tldBranch = Dense(int(math.log2(len(tldEncoder.classes_))), input_shape=(len(tldEncoder.classes_),), activation='relu')(tldBranchI)
 tldBranch = BatchNormalization()(tldBranch)
 tldBranch = Dropout(0.2, name="tld")(tldBranch)
 tldBranchO = Dense(len(set(classes)), activation='softmax')(tldBranch)
@@ -347,7 +339,7 @@ textModel.save(modelPath +'textBranchNorm.h5')
 
 #####################
 # 6.) Name Model
-nameBranchI = Input(shape=(None,), name="inputName")
+nameBranchI = Input(shape=(None,), name="inputUser")
 nameBranch = Embedding(nameTokenizer.num_words,
                          nameEmbeddings,
                          input_length=MAX_NAME_SEQUENCE_LENGTH,
