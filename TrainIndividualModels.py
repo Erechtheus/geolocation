@@ -1,7 +1,10 @@
 #Load stuff:
-#import os
-#os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
-#os.environ["CUDA_VISIBLE_DEVICES"] = ""
+from sklearn.utils import shuffle
+import os
+from keras.callbacks import EarlyStopping, ReduceLROnPlateau
+
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 import pickle
 import numpy as np
@@ -13,11 +16,6 @@ import datetime
 from keras import Input
 from keras import Model
 
-#Random seed
-from numpy.random import seed
-seed(2019*2*5)
-from tensorflow import set_random_seed
-set_random_seed(2019*2*5)
 
 binaryPath= 'data/binaries/'    #Place where the serialized training data is
 modelPath= 'data/models/'       #Place to store the models
@@ -44,6 +42,11 @@ textEmbeddings = 100
 nameEmbeddings = 100
 tzEmbeddings = 50
 
+#callbacks = [
+#     EarlyStopping(monitor='val_loss', min_delta=1e-4, patience=6, verbose=1, restore_best_weights=True),
+#     ReduceLROnPlateau(monitor='val_loss', factor=0.1, min_delta=1e-4, patience=2, cooldown=1, verbose=1),
+##     ModelCheckpoint(filepath='twitter.h5', monitor='loss', verbose=0, save_best_only=True),
+#]
 
 
 ####################
