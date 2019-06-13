@@ -72,3 +72,10 @@ for index in reversed(predict.argsort()[0][-5:]):
 	saint denis-a893-fr with score=0.024
 	meaux-a877-fr with score=0.015
 
+
+###TODO
+ - Bilder
+ - Network
+ - Variable length
+ - correct shuffle
+ - Flask
