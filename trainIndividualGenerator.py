@@ -4,7 +4,7 @@
 #os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 import time
-from keras.layers import Dropout, Dense, BatchNormalization, SpatialDropout1D, LSTM, concatenate
+from keras.layers import Dropout, Dense, BatchNormalization, SpatialDropout1D, LSTM, concatenate, Concatenate
 from keras.layers.embeddings import Embedding
 import math
 import datetime
@@ -199,7 +199,7 @@ descriptionModel = Model(inputs=descriptionBranchI, outputs=descriptionBranchO)
 descriptionModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 start = time.time()
 descriptionHistory = descriptionModel.fit_generator(generator=batch_generator(twitterFile=trainingFile, goldstandard=idToGold, batch_size=batch_size),
-                    epochs=nb_epoch, samples_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
+                    epochs=nb_epoch, steps_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
                     verbose=verbosity
                     )
 print("descriptionBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
@@ -216,7 +216,7 @@ domainModel = Model(inputs=domainBranchI, outputs=domainBranchO)
 domainModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 start = time.time()
 sourceHistory = domainModel.fit_generator(generator=batch_generator(twitterFile=trainingFile, goldstandard=idToGold, batch_size=batch_size),
-                    epochs=nb_epoch, samples_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
+                    epochs=nb_epoch, steps_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
                     verbose=verbosity
                     )
 print("tldBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
@@ -235,7 +235,7 @@ tldBranchModel = Model(inputs=tldBranchI, outputs=tldBranchO)
 tldBranchModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 start = time.time()
 sourceHistory = tldBranchModel.fit_generator(generator=batch_generator(twitterFile=trainingFile, goldstandard=idToGold, batch_size=batch_size),
-                    epochs=nb_epoch, samples_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
+                    epochs=nb_epoch, steps_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
                     verbose=verbosity
                     )
 print("tldBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
@@ -243,24 +243,22 @@ tldBranchModel.save(modelPath + 'tldBranch.h5')
 
 
 #2c.)Merged Model
-#TODO USe concat to combine the two inputs
-"""
-linkBranchI= Input(shape=((len(domainEncoder.classes_) + len(tldEncoder.classes_)),), name="inputLink")
+linkBranchI = concatenate([domainBranchI, tldBranchI])
 linkBranch = Dense(int(math.log2(len(domainEncoder.classes_) + len(tldEncoder.classes_))), input_shape=((len(domainEncoder.classes_) + len(tldEncoder.classes_)),), activation='relu')(linkBranchI)
 linkBranch = BatchNormalization()(linkBranch)
 linkBranch = Dropout(0.2, name="linkModel")(linkBranch)
 linkBranchO = Dense(len(set(classes)), activation='softmax')(linkBranch)
 
-linkModel = Model(inputs=linkBranchI, outputs=linkBranchO)
+linkModel = Model(inputs=[domainBranchI, tldBranchI], outputs=linkBranchO)
 linkModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 start = time.time()
 sourceHistory = linkModel.fit_generator(generator=batch_generator(twitterFile=trainingFile, goldstandard=idToGold, batch_size=batch_size),
-                    epochs=nb_epoch, samples_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
+                    epochs=nb_epoch, steps_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
                     verbose=verbosity
                     )
 print("linkModel finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
 linkModel.save(modelPath + 'linkModel.h5')
-"""
+
 #####################
 #3.) location Model
 locationBranchI = Input(shape=(None,), name="inputLocation")
@@ -281,7 +279,7 @@ locationModel = Model(inputs=locationBranchI, outputs=locationBranchO)
 locationModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 start = time.time()
 locationHistory = locationModel.fit_generator(generator=batch_generator(twitterFile=trainingFile, goldstandard=idToGold, batch_size=batch_size),
-                    epochs=nb_epoch, samples_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
+                    epochs=nb_epoch, steps_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
                     verbose=verbosity
                     )
 print("locationHistory finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
@@ -301,7 +299,7 @@ sourceModel = Model(inputs=sourceBranchI, outputs=sourceBranchO)
 sourceModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 start = time.time()
 sourceHistory = sourceModel.fit_generator(generator=batch_generator(twitterFile=trainingFile, goldstandard=idToGold, batch_size=batch_size),
-                    epochs=nb_epoch, samples_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
+                    epochs=nb_epoch, steps_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
                     verbose=verbosity
                     )
 print("sourceBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
@@ -329,7 +327,7 @@ textModel = Model(inputs=textBranchI, outputs=textBranchO)
 textModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 start = time.time()
 textHistory = textModel.fit_generator(generator=batch_generator(twitterFile=trainingFile, goldstandard=idToGold, batch_size=batch_size),
-                    epochs=nb_epoch, samples_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
+                    epochs=nb_epoch, steps_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
                     verbose=verbosity
                     )
 print("textBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
@@ -357,7 +355,7 @@ nameModel = Model(inputs=nameBranchI, outputs=nameBranchO)
 nameModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 start = time.time()
 nameHistory = nameModel.fit_generator(generator=batch_generator(twitterFile=trainingFile, goldstandard=idToGold, batch_size=batch_size),
-                    epochs=nb_epoch, samples_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
+                    epochs=nb_epoch, steps_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
                     verbose=verbosity
                     )
 print("nameBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
@@ -384,7 +382,7 @@ tzBranchModel = Model(inputs=tzBranchI, outputs=tzBranchO)
 tzBranchModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 start = time.time()
 tzHistory = tzBranchModel.fit_generator(generator=batch_generator(twitterFile=trainingFile, goldstandard=idToGold, batch_size=batch_size),
-                    epochs=nb_epoch, samples_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
+                    epochs=nb_epoch, steps_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
                     verbose=verbosity
                     )
 print("tzBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
@@ -404,7 +402,7 @@ utcBranchModel = Model(inputs=utcBranchI, outputs=utcBranchO)
 utcBranchModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 start = time.time()
 utcHistory = utcBranchModel.fit_generator(generator=batch_generator(twitterFile=trainingFile, goldstandard=idToGold, batch_size=batch_size),
-                    epochs=nb_epoch, samples_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
+                    epochs=nb_epoch, steps_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
                     verbose=verbosity
                     )
 print("utcBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
@@ -422,7 +420,7 @@ userLangModel = Model(inputs=userLangBranchI, outputs=userLangBranchO)
 userLangModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 start = time.time()
 userLangHistory = userLangModel.fit_generator(generator=batch_generator(twitterFile=trainingFile, goldstandard=idToGold, batch_size=batch_size),
-                    epochs=nb_epoch, samples_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
+                    epochs=nb_epoch, steps_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
                     verbose=verbosity
                     )
 print("userLangBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
@@ -440,7 +438,7 @@ tweetTimeModel = Model(inputs=tweetTimeBranchI, outputs=tweetTimeBranchO)
 tweetTimeModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 start = time.time()
 userLangHistory = tweetTimeModel.fit_generator(generator=batch_generator(twitterFile=trainingFile, goldstandard=idToGold, batch_size=batch_size),
-                    epochs=nb_epoch, samples_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
+                    epochs=nb_epoch, steps_per_epoch=math.ceil(numberOfTrainingsamples/batch_size),
                     verbose=verbosity
                     )
 print("tweetTimeBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
