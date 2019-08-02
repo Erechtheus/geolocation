@@ -68,6 +68,7 @@ trainTZ=[]
 trainUtc=[]
 trainUserLang =[]
 trainCreatedAt= []
+#trainUserMentions = []
 for key in tweetToTextMapping:
     trainLabels.append(tweetToTextMapping[key].place._name)
 
@@ -81,6 +82,7 @@ for key in tweetToTextMapping:
     trainUtc.append(str(tweetToTextMapping[key].utcOffset))
     trainUserLang.append(str(tweetToTextMapping[key].userLanguage))
     trainCreatedAt.append(str(tweetToTextMapping[key].createdAt.hour) +"-" +str(roundMinutes(tweetToTextMapping[key].createdAt.minute)))
+#    trainUserMentions.append(tweetToTextMapping[key].userMentions)
 
 
 
@@ -207,7 +209,7 @@ trainCreatedAt = timeEncoder.transform(trainCreatedAt)
 #####Save result of preprocessing
 #1.) Save relevant processing data
 filehandler = open(binaryPath + "processors.obj", "wb")
-pickle.dump((descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, timeEncoder, placeMedian, classes, colnames), filehandler)
+pickle.dump((descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, timeEncoder, placeMedian, classes, colnames, classEncoder), filehandler)
 filehandler.close()
 
 #Save important variables
@@ -217,5 +219,5 @@ filehandler.close()
 
 #2.) Save converted training data
 filehandler = open(binaryPath + "data.obj", "wb")
-pickle.dump((trainDescription,  trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt), filehandler, protocol=4)
+pickle.dump((trainDescription, trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt), filehandler, protocol=4)
 filehandler.close()
