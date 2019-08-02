@@ -24,7 +24,8 @@ MAX_DESC_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX
 file = open(binaryPath +"data.obj",'rb')
 trainDescription,  trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt, trainUserMentions = pickle.load(file)
 
-
+trainSinTime = []
+trainCosTime = []
 ##################Train
 # create the model
 batch_size = 256
