@@ -1,7 +1,10 @@
 #Load stuff:
-#import os
-#os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
-#os.environ["CUDA_VISIBLE_DEVICES"] = ""
+from sklearn.utils import shuffle
+import os
+from keras.callbacks import EarlyStopping, ReduceLROnPlateau
+
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 import pickle
 import numpy as np
@@ -13,30 +16,25 @@ import datetime
 from keras import Input
 from keras import Model
 
-#Random seed
-from numpy.random import seed
-seed(2019*2*5)
-from tensorflow import set_random_seed
-set_random_seed(2019*2*5)
 
 binaryPath= 'data/binaries/'    #Place where the serialized training data is
 modelPath= 'data/models/'       #Place to store the models
 
 #Load preprocessed data...
 file = open(binaryPath +"processors.obj",'rb')
-descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, timeEncoder, placeMedian, classes, colnames = pickle.load(file)
+descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, placeMedian, classes, colnames, classEncoder  = pickle.load(file)
 
 file = open(binaryPath +"vars.obj",'rb')
 MAX_DESC_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX_NAME_SEQUENCE_LENGTH, MAX_TZ_SEQUENCE_LENGTH = pickle.load(file)
 
 file = open(binaryPath +"data.obj",'rb')
-trainDescription,  trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt = pickle.load(file)
+trainDescription,  trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt= pickle.load(file)
 
 ##################Train
 # create the model
 batch_size = 256
 nb_epoch = 5
-verbosity=1
+verbosity=2
 
 descriptionEmbeddings = 100
 locEmbeddings = 50
@@ -44,6 +42,11 @@ textEmbeddings = 100
 nameEmbeddings = 100
 tzEmbeddings = 50
 
+#callbacks = [
+#     EarlyStopping(monitor='val_loss', min_delta=1e-4, patience=6, verbose=1, restore_best_weights=True),
+#     ReduceLROnPlateau(monitor='val_loss', factor=0.1, min_delta=1e-4, patience=2, cooldown=1, verbose=1),
+##     ModelCheckpoint(filepath='twitter.h5', monitor='loss', verbose=0, save_best_only=True),
+#]
 
 
 ####################
@@ -325,8 +328,25 @@ userLangHistory = userLangModel.fit(trainUserLang, classes,
 print("userLangBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
 userLangModel.save(modelPath +'userLangBranch.h5')
 
+#10a Tweet-time (as number)
+tweetTimeBranchI = Input(shape=(trainCreatedAt.shape[1],), name="inputTweetTime")
+tweetTimeBranch = Dense(2, name="tweetTime")(tweetTimeBranchI)# simple-no-operation layer, which is used in the merged model especially
+tweetTimeBranchO = Dense(len(set(classes)), activation='softmax')(tweetTimeBranch)
 
-#10) #Tweet-Time (120)
+tweetTimeModel = Model(inputs=tweetTimeBranchI, outputs=tweetTimeBranchO)
+tweetTimeModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+start = time.time()
+
+timeHistory = tweetTimeModel.fit(trainCreatedAt, classes,
+                               epochs=nb_epoch, batch_size=batch_size,
+                               verbose=verbosity
+                               )
+print("tweetTimeModel finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
+tweetTimeModel.save(modelPath + 'tweetTimeBranch.h5')
+
+
+#10) #Tweet-Time (120-categorial; instead of number)
+"""
 categorial = np.zeros((len(trainCreatedAt), len(timeEncoder.classes_)), dtype="bool")
 for i in range(len(trainCreatedAt)):
     categorial[i, trainCreatedAt[i]] = True
@@ -341,17 +361,18 @@ tweetTimeBranchO = Dense(len(set(classes)), activation='softmax')(tweetTimeBranc
 tweetTimeModel = Model(inputs=tweetTimeBranchI, outputs=tweetTimeBranchO)
 tweetTimeModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 start = time.time()
-userLangHistory = tweetTimeModel.fit(trainCreatedAt, classes,
-                    epochs=nb_epoch, batch_size=batch_size,
-                    verbose=verbosity
-                    )
-print("tweetTimeBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
-tweetTimeModel.save(modelPath +'tweetTimeBranch.h5')
 
+timeHistory = tweetTimeModel.fit(trainCreatedAt, classes,
+                               epochs=nb_epoch, batch_size=batch_size,
+                               verbose=verbosity
+                               )
+print("tweetTimeModel finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
+tweetTimeModel.save(modelPath + 'tweetTimeBranch.h5')
+"""
 
 
 #11) Merged sequential model
-trainData = np.concatenate((trainDomain, trainTld, trainSource, trainUserLang, trainCreatedAt), axis=1)
+trainData = np.concatenate((trainDomain, trainTld, trainSource, trainUserLang), axis=1)
 
 categorialBranchI = Input(shape=(trainData.shape[1],), name="inputCategorial")
 categorialBranch = Dense(int(math.log2(trainData.shape[1])), input_shape=(trainData.shape[1],), activation='relu')(categorialBranchI)

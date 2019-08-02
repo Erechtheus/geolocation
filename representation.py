@@ -7,34 +7,55 @@ from datetime import datetime
 import tldextract
 
 class Place:
-    def __init__(self, name=None, lat=None, lon=None):
+    def __init__(self, name=None, lat=None, lon=None, fullName=None, country = None):
         self._name = name
         self._lat = lat
         self._lon = lon
+        self._fullName = fullName
+        self._country = country
 
-        @property
-        def name(self):
-            return self._name
+    @property
+    def name(self):
+        return self._name
 
-        @property
-        def lat(self):
-            return self._lat
+    @property
+    def lat(self):
+        return self._lat
 
-        @property
-        def lon(self):
-            return self._lon
+    @property
+    def lon(self):
+        return self._lon
 
-        @name.setter
-        def name(self, value):
-            self._name = value
+    @property
+    def fullName(self):
+        return self._fullName
 
-        @lat.setter
-        def lat(self, value):
-            self._lat = value
+    @property
+    def country(self):
+        return self._country
 
-        @lon.setter
-        def lon(self, value):
-            self._lon = value
+    @name.setter
+    def name(self, value):
+        self._name = value
+
+    @lat.setter
+    def lat(self, value):
+        self._lat = value
+
+    @lon.setter
+    def lon(self, value):
+        self._lon = value
+
+    @fullName.setter
+    def fullName(self, value):
+        self._fullName = value
+
+    @country.setter
+    def country(self, value):
+        self._country = value
+
+    def __str__(self):
+        return 'ID=' +self._name +"\t" +"name= " +self._fullName +"-" +self._country
 
 class Media:
     def __init__(self, url=None, type=None):
@@ -265,12 +286,14 @@ def parseJsonLineWithPlace( line ):
 
 
     placeName = (tweet['place']['id'])
+    placeFullName =tweet['place']['full_name']
+    placeCountry = tweet['place']['country_code']
     placeLon = None
     placeLat = None
     if(tweet['coordinates'] != None):
         placeLon = float(tweet['coordinates']['coordinates'][0])
         placeLat = float(tweet['coordinates']['coordinates'][1])
-    place = Place(name=placeName, lat=placeLat, lon=placeLon)
+    place = Place(name=placeName, lat=placeLat, lon=placeLon, fullName=placeFullName, country=placeCountry)
 
     instance = Instance(text=tweet['text'], place=place, timezone=tweet['user']['time_zone'],  location=tweet['user']['location'], name=tweet['user']['name'], utcOffset = tweet['user']['utc_offset'], description = tweet['user']['description'])
 

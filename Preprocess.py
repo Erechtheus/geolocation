@@ -67,7 +67,9 @@ trainUserName=[]
 trainTZ=[]
 trainUtc=[]
 trainUserLang =[]
-trainCreatedAt= []
+#trainCreatedAt= []
+trainSinTime = []
+trainCosTime = []
 for key in tweetToTextMapping:
     trainLabels.append(tweetToTextMapping[key].place._name)
 
@@ -80,9 +82,16 @@ for key in tweetToTextMapping:
     trainTZ.append(str(tweetToTextMapping[key].timezone))
     trainUtc.append(str(tweetToTextMapping[key].utcOffset))
     trainUserLang.append(str(tweetToTextMapping[key].userLanguage))
-    trainCreatedAt.append(str(tweetToTextMapping[key].createdAt.hour) +"-" +str(roundMinutes(tweetToTextMapping[key].createdAt.minute)))
+    #trainCreatedAt.append(str(tweetToTextMapping[key].createdAt.hour) +"-" +str(roundMinutes(tweetToTextMapping[key].createdAt.minute)))
 
+    t = tweetToTextMapping[key].createdAt.hour * 60 * 60 + tweetToTextMapping[key].createdAt.minute * 60 + tweetToTextMapping[key].createdAt.second
+    t = 2*np.pi*t/(24*60*60)
+    trainSinTime.append(np.sin(t))
+    trainCosTime.append(np.cos(t))
 
+trainCreatedAt = np.column_stack((trainSinTime, trainCosTime))
+del(trainSinTime)
+del(trainCosTime)
 
 #Delete tweets and run gc
 del(tweetToTextMapping)
@@ -199,15 +208,16 @@ langEncoder.fit(trainUserLang)
 trainUserLang = langEncoder.transform(trainUserLang)
 
 #Tweet-Time (120 steps)
-print("Tweet Time")
-timeEncoder = LabelEncoder()
-timeEncoder.fit(trainCreatedAt)
-trainCreatedAt = timeEncoder.transform(trainCreatedAt)
+#We decided to use the time directly, instead of using the time-windows
+#print("Tweet Time")
+#timeEncoder = LabelEncoder()
+#timeEncoder.fit(trainCreatedAt)
+#trainCreatedAt = timeEncoder.transform(trainCreatedAt)
 
 #####Save result of preprocessing
 #1.) Save relevant processing data
 filehandler = open(binaryPath + "processors.obj", "wb")
-pickle.dump((descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, timeEncoder, placeMedian, classes, colnames), filehandler)
+pickle.dump((descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, placeMedian, classes, colnames, classEncoder ), filehandler)
 filehandler.close()
 
 #Save important variables
@@ -217,5 +227,5 @@ filehandler.close()
 
 #2.) Save converted training data
 filehandler = open(binaryPath + "data.obj", "wb")
-pickle.dump((trainDescription,  trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt), filehandler, protocol=4)
+pickle.dump((trainDescription, trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt), filehandler, protocol=4)
 filehandler.close()

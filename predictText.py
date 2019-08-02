@@ -3,16 +3,19 @@ import pickle
 from keras.preprocessing.sequence import pad_sequences
 import numpy as np
 
+binaryPath= 'data/binaries/'    #Place where the serialized training data is
+modelPath= 'data/models/'       #Place to store the models
+
 #Load Model
-textBranch = load_model('/media/philippe/5f695998-f5a5-4389-a2d8-4cf3ffa1288a/data/w-nut-latest/models/textBranchNorm.h5')
+textBranch = load_model(modelPath +'/textBranchNorm.h5')
 
 #Load tokenizers, and mapping
-file = open("/media/philippe/5f695998-f5a5-4389-a2d8-4cf3ffa1288a/data/w-nut-latest/binaries/processors.obj",'rb')
-descriptionTokenizer, linkTokenizer, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, placeMedian, classes, colnames = pickle.load(file)
+file = open(binaryPath +"processors.obj",'rb')
+descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, placeMedian, classes, colnames, classEncoder  = pickle.load(file)
 
 #Load properties from model
-file = open("/media/philippe/5f695998-f5a5-4389-a2d8-4cf3ffa1288a/data/w-nut-latest/binaries/vars.obj",'rb')
-MAX_DESC_SEQUENCE_LENGTH, MAX_URL_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX_NAME_SEQUENCE_LENGTH, MAX_TZ_SEQUENCE_LENGTH = pickle.load(file)
+file = open(binaryPath +"vars.obj",'rb')
+MAX_DESC_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX_NAME_SEQUENCE_LENGTH, MAX_TZ_SEQUENCE_LENGTH = pickle.load(file)
 
 #Predict text (e.g., 'Montmartre is truly beautiful')
 testTexts=[];
