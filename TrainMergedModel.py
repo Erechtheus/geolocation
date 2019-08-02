@@ -35,13 +35,13 @@ userLangBranch = load_model(modelPath +'userLangBranch.h5')
 tweetTimeBranch = load_model(modelPath +'tweetTimeBranch.h5')
 
 file = open(binaryPath +"processors.obj",'rb')
-descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, timeEncoder, placeMedian, classes, colnames = pickle.load(file)
+descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, placeMedian, classes, colnames, classEncoder  = pickle.load(file)
 
 file = open(binaryPath +"vars.obj",'rb')
 MAX_DESC_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX_NAME_SEQUENCE_LENGTH, MAX_TZ_SEQUENCE_LENGTH = pickle.load(file)
 
 file = open(binaryPath +"data.obj",'rb')
-trainDescription,  trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt = pickle.load(file)
+trainDescription,  trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt= pickle.load(file)
 
 # create the model
 batch_size = 256
@@ -81,10 +81,10 @@ for i in range(len(trainUserLang)):
 trainUserLang = categorial
 
 #10) #Tweet-Time (120)
-categorial = np.zeros((len(trainCreatedAt), len(timeEncoder.classes_)), dtype="bool")
-for i in range(len(trainCreatedAt)):
-    categorial[i, trainCreatedAt[i]] = True
-trainCreatedAt = categorial
+#categorial = np.zeros((len(trainCreatedAt), len(timeEncoder.classes_)), dtype="bool")
+#for i in range(len(trainCreatedAt)):
+#    categorial[i, trainCreatedAt[i]] = True
+#trainCreatedAt = categorial
 
 
 #####################
@@ -147,8 +147,8 @@ final_model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', me
 start = time.time()
 finalHistory = final_model.fit([trainDescription, trainDomain, trainTld, trainLocation, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt],
                           classes,
-                    nb_epoch=nb_epoch, batch_size=batch_size,
-                    verbose=1
+                    epochs=nb_epoch, batch_size=batch_size,
+                    verbose=2
                     )
 end = time.time()
 print("final_model finished after " +str(datetime.timedelta(seconds=time.time() - start)))
@@ -158,3 +158,23 @@ model_yaml = final_model.to_yaml()
 with open(modelPath +"finalmodel2.yaml", "w") as yaml_file:
     yaml_file.write(model_yaml)
 final_model.save_weights(modelPath +'finalmodelWeight2.h5')
+
+#########################
+for layer in final_model.layers:
+    layer.trainable = True
+    final_model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+start = time.time()
+finalHistory = final_model.fit([trainDescription, trainDomain, trainTld, trainLocation, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt],
+                          classes,
+                    epochs=nb_epoch, batch_size=batch_size,
+                    verbose=2
+                    )
+end = time.time()
+print("final_model finished after " +str(datetime.timedelta(seconds=time.time() - start)))
+
+
+model_yaml = final_model.to_yaml()
+with open(modelPath +"finalmodel3.yaml", "w") as yaml_file:
+    yaml_file.write(model_yaml)
+final_model.save_weights(modelPath +'finalmodelWeight3.h5')

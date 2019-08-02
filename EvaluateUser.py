@@ -1,7 +1,7 @@
 #Load stuff:
-#import os
-#os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
-#os.environ["CUDA_VISIBLE_DEVICES"] = ""
+import os
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 import pickle
 import numpy as np
@@ -68,8 +68,8 @@ def evalMax(predictions, type='USER', predictToFile='predictionsUserTmp.json'):
 
 #############################
 #Evaluate the models on the test data
-file = open(binaryPath+"processors.obj",'rb')
-descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, timeEncoder, placeMedian, classes, colnames = pickle.load(file)
+file = open(binaryPath +"processors.obj",'rb')
+descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, placeMedian, classes, colnames, classEncoder  = pickle.load(file)
 
 file = open(binaryPath +"vars.obj",'rb')
 MAX_DESC_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX_NAME_SEQUENCE_LENGTH, MAX_TZ_SEQUENCE_LENGTH = pickle.load(file)
@@ -78,7 +78,7 @@ def roundMinutes(x, base=15):
     return int(base * round(float(x)/base))
 
 ##Load test-data
-testDescription = []; testLinks = []; testLocations=[]; testSource=[]; testTexts=[]; testUserName=[]; testTimeZone=[]; testUtc = [];  testUserIds=[]; testUserLang=[]; testCreatedAt=[]
+testDescription = []; testLinks = []; testLocations=[]; testSource=[]; testTexts=[]; testUserName=[]; testTimeZone=[]; testUtc = [];  testUserIds=[]; testUserLang=[]; testSinTime = []; testCosTime=[]
 
 f = open(testFile)
 for line in f:
@@ -94,9 +94,14 @@ for line in f:
     testTimeZone.append(str(instance.timezone))
     testUtc.append(str(instance.utcOffset))
     testUserLang.append(str(instance.userLanguage))
-    testCreatedAt.append(str(instance.createdAt.hour) + "-" + str(roundMinutes(instance.createdAt.minute)))
+    #testCreatedAt.append(str(instance.createdAt.hour) + "-" + str(roundMinutes(instance.createdAt.minute)))
 
-    testUserIds.append(instance.userName)
+    t = instance.createdAt.hour * 60 * 60 + instance.createdAt.minute * 60 + instance.createdAt.second
+    t = 2 * np.pi * t / (24 * 60 * 60)
+    testSinTime.append(np.sin(t))
+    testCosTime.append(np.cos(t))
+
+    testUserIds.append(instance.userId)
 
 
 
@@ -236,23 +241,24 @@ evalMax(predict)
 
 
 #10
+"""
 categorial = np.zeros((len(testCreatedAt), len(timeEncoder.classes_)), dtype="bool")
 for i in range(len(testCreatedAt)):
     if testCreatedAt[i] in timeEncoder.classes_:
         categorial[i, timeEncoder.transform([testCreatedAt[i]])[0]] = True
     else:
         print("hmm  " +testCreatedAt[i])
+"""
 
 print("Tweet Time")
-testCreatedAt = categorial
-predict = tweetTimeBranch.predict(categorial)
+predict = tweetTimeBranch.predict(np.column_stack((testSinTime, testCosTime)))
 evalMax(predict)
 #/home/philippe/PycharmProjects/deepLearning/predictionsUser.json& USER& 0.024& 11720.6& 10363.2
 
 
 #11.) Merged model
 print("Full Model")
-predict = final_model.predict([descriptionSequences, testDomain, testTld, locationSequences, testSource, textSequences, userSequences, tzSequences, testUtc, testUserLang, testCreatedAt ])
+predict = final_model.predict([descriptionSequences, testDomain, testTld, locationSequences, testSource, textSequences, userSequences, tzSequences, testUtc, testUserLang, (np.column_stack((testSinTime, testCosTime)))])
 evalMax(predict)
 #/home/philippe/PycharmProjects/deepLearning/predictionsUser.json& USER& 0.53& 14.9& 838.5
 
