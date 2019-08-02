@@ -1,7 +1,7 @@
 #Load stuff:
-#import os
-#os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
-#os.environ["CUDA_VISIBLE_DEVICES"] = ""
+import os
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 import pickle
 import numpy as np
@@ -73,7 +73,7 @@ def eval(predictions, type='TWEET', predictToFile='predictionsTmp.json'):
 #############################
 #Evaluate the models on the test data
 file = open(binaryPath +"processors.obj",'rb')
-descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, timeEncoder, placeMedian, classes, colnames = pickle.load(file)
+descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, placeMedian, classes, colnames, classEncoder  = pickle.load(file)
 
 file = open(binaryPath +"vars.obj",'rb')
 MAX_DESC_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX_NAME_SEQUENCE_LENGTH, MAX_TZ_SEQUENCE_LENGTH = pickle.load(file)
@@ -82,7 +82,7 @@ def roundMinutes(x, base=15):
     return int(base * round(float(x)/base))
 
 ##Load test-data
-testDescription = []; testLinks = []; testLocations=[]; testSource=[]; testTexts=[]; testUserName=[]; testTimeZone=[]; testUtc = []; testIDs=[]; testUserLang=[]; testCreatedAt=[]
+testDescription = []; testLinks = []; testLocations=[]; testSource=[]; testTexts=[]; testUserName=[]; testTimeZone=[]; testUtc = []; testIDs=[]; testUserLang=[];  testSinTime = []; testCosTime=[]
 f = open(testFile)
 for line in f:
     instance = parseJsonLine(line)
@@ -98,10 +98,14 @@ for line in f:
     testTimeZone.append(str(instance.timezone))
     testUtc.append(str(instance.utcOffset))
     testUserLang.append(str(instance.userLanguage))
-    testCreatedAt.append(str(instance.createdAt.hour) + "-" + str(roundMinutes(instance.createdAt.minute)))
+    #testCreatedAt.append(str(instance.createdAt.hour) + "-" + str(roundMinutes(instance.createdAt.minute)))
+
+    t = instance.createdAt.hour * 60 * 60 + instance.createdAt.minute * 60 + instance.createdAt.second
+    t = 2*np.pi*t/(24*60*60)
+    testSinTime.append(np.sin(t))
+    testCosTime.append(np.cos(t))
 
     testIDs.append(instance.id)
-
 
 #############################
 #Convert the data
@@ -233,6 +237,8 @@ eval(predict)
 
 
 #10) #Tweet-Time (120)
+print("TweetTime")
+"""
 categorial = np.zeros((len(testCreatedAt), len(timeEncoder.classes_)), dtype="bool")
 for i in range(len(testCreatedAt)):
     if testCreatedAt[i] in timeEncoder.classes_:
@@ -241,9 +247,8 @@ for i in range(len(testCreatedAt)):
         print("hmm  " +testCreatedAt[i])
 
 testCreatedAt = categorial
-
-print("TweetTime")
-predict = tweetTimeBranch.predict(categorial)
+"""
+predict = tweetTimeBranch.predict(np.column_stack((testSinTime, testCosTime)))
 eval(predict)
 #/home/philippe/PycharmProjects/deepLearning/predictions.json& TWEET& 0.028& 8867.6& 8464.9
 
@@ -259,6 +264,6 @@ eval(predict)
 
 #12.) Merged model with original weights; without 2 parts which are not pretrained; maybe include?
 print("Merged=")
-predict = final_modelTrainable.predict([descriptionSequences, testDomain, testTld, locationSequences, testSource, textSequences, userSequences, tzSequences, testUtc, testUserLang, testCreatedAt ])
+predict = final_modelTrainable.predict([descriptionSequences, testDomain, testTld, locationSequences, testSource, textSequences, userSequences, tzSequences, testUtc, testUserLang, np.column_stack((testSinTime, testCosTime)) ])
 eval(predict)
 #/home/philippe/PycharmProjects/deepLearning/predictions.json& TWEET& 0.43& 47.6& 1179.4
