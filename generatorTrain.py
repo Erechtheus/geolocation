@@ -18,6 +18,8 @@ from keras.layers.embeddings import Embedding
 from keras.preprocessing.sequence import pad_sequences
 from keras.preprocessing.text import Tokenizer
 from sklearn.preprocessing import LabelEncoder
+from keras.layers.merge import concatenate
+
 
 from representation import parseJsonLine, parseJsonLineWithPlace
 
@@ -107,6 +109,7 @@ def batch_generator(twitterFile, batch_size=64):
                 #yield trainTexts, classes
                 yield ({
                         'inputText' : trainTexts,
+                        'char_embedding' : trainCharacters,
                         },
                        classes
                        )
@@ -126,39 +129,50 @@ def batch_generator(twitterFile, batch_size=64):
 
 
 
-#Text Model
-#inputs = []; concat = []
+inputs = []; concat = []
+
+#</Text Model>
 textBranchI = Input(shape=(None,), name="inputText")
-#inputs.append(textBranchI)
+inputs.append(textBranchI)
 textBranch = Embedding(textTokenizer.num_words,
                          textEmbeddings,
                         #input_length=MAX_TEXT_SEQUENCE_LENGTH,
                         mask_zero=True
                          )(textBranchI)
-#textBranch = SpatialDropout1D(rate=0.2)(textBranch)
 textBranch = BatchNormalization()(textBranch)
-#textBranch = Dropout(0.2)(textBranch)
-textBranch = LSTM(units=100, dropout=0.2, recurrent_dropout=0.2)(textBranch)
-textBranch = BatchNormalization()(textBranch)
-#textBranch = Dropout(0.2, name="text")(textBranch)
-textBranchO = Dense(len(classEncoder.classes_), activation='softmax')(textBranch)
+textBranch = Dropout(0.2)(textBranch)
 
+concat.append(textBranch)
+#</Text Model>
 
 ##<Char Embedding>
 """
 char_ids = Input(batch_shape=(None, None, None), dtype='int32', name='char_input')
 inputs.append(char_ids)
-char_embeddings = Embedding(input_dim=self._char_vocab_size,
-                            output_dim=self._char_embedding_dim,
-                            mask_zero=self._use_char_lstm,
+char_embeddings = Embedding(input_dim=len(char2Idx)+1,
+                            output_dim=25,
+                            mask_zero=false,
                             name='char_embedding')(char_ids)
 char_embeddings = TimeDistributed(Conv1D(self._char_filter_size, self._char_filter_length, padding='same'),
                                   name="char_cnn")(char_embeddings)
 char_embeddings = TimeDistributed(GlobalMaxPooling1D(), name="char_pooling")(char_embeddings)
-
 concat.append(char_embeddings)
 """
 ##</Char Embedding>
+
+
+#Build concatenated layer
+if len(concat) >= 2:
+    concatenated = concatenate(concat)
+else:
+    concatenated = concat[0]
+
+textBranch = LSTM(units=100, dropout=0.2, recurrent_dropout=0.2)(concatenated)
+textBranch = BatchNormalization()(textBranch)
+#textBranch = Dropout(0.2, name="text")(textBranch)
+textBranchO = Dense(len(classEncoder.classes_), activation='softmax')(textBranch)
+
+
 
 
 
