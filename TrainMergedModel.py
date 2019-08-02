@@ -16,10 +16,10 @@ binaryPath= 'data/binaries/'    #Place where the serialized training data is
 modelPath= 'data/models/'       #Place to store the models
 
 #Random seed
-from numpy.random import seed
-seed(2019*2*5)
-from tensorflow import set_random_seed
-set_random_seed(2019*2*5)
+#from numpy.random import seed
+#seed(2019*2*5)
+#from tensorflow import set_random_seed
+#set_random_seed(2019*2*5)
 
 # Load the eight individual models
 descriptionBranch = load_model(modelPath +'descriptionBranchNorm.h5')
