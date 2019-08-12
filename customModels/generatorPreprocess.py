@@ -16,8 +16,8 @@ from representation import parseJsonLine, parseJsonLineWithPlace
 binaryPath= 'data/binaries/'    #Place where the serialized training data is
 modelPath= 'data/models/'       #Place to store the models
 unknownClass = "unknownLocation" #place holder for unknown classes
-trainFile="/home/philippe/PycharmProjects/geolocation/train.json.gz"
-testFile="/home/philippe/PycharmProjects/geolocation/test.json.gz"
+trainFile="/home/philippe/Desktop/train.json.gz"
+testFile="/home/philippe/Desktop/test.json.gz"
 
 
 

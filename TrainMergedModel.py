@@ -8,6 +8,7 @@ from keras.layers import Dense, concatenate, BatchNormalization
 import time
 
 import os
+from sklearn.utils import shuffle
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
@@ -43,9 +44,14 @@ MAX_DESC_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX
 file = open(binaryPath +"data.obj",'rb')
 trainDescription,  trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt= pickle.load(file)
 
+#Shuffle train-data
+trainDescription,  trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt, classes = shuffle(trainDescription,  trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt, classes, random_state=1202)
+
+
 # create the model
 batch_size = 256
 nb_epoch = 3
+validation_split = 0.01 #91279 samples for validation
 
 
 ##Convert data into one hot encodings
@@ -148,7 +154,7 @@ start = time.time()
 finalHistory = final_model.fit([trainDescription, trainDomain, trainTld, trainLocation, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt],
                           classes,
                     epochs=nb_epoch, batch_size=batch_size,
-                    verbose=2
+                    verbose=2, validation_split=validation_split
                     )
 end = time.time()
 print("final_model finished after " +str(datetime.timedelta(seconds=time.time() - start)))
@@ -168,7 +174,7 @@ start = time.time()
 finalHistory = final_model.fit([trainDescription, trainDomain, trainTld, trainLocation, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt],
                           classes,
                     epochs=nb_epoch, batch_size=batch_size,
-                    verbose=2
+                    verbose=2, validation_split=validation_split
                     )
 end = time.time()
 print("final_model finished after " +str(datetime.timedelta(seconds=time.time() - start)))
