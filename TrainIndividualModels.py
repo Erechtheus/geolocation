@@ -30,6 +30,9 @@ MAX_DESC_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX
 file = open(binaryPath +"data.obj",'rb')
 trainDescription,  trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt= pickle.load(file)
 
+#Shuffle train-data
+trainDescription,  trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt, classes = shuffle(trainDescription,  trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt, classes, random_state=1202)
+
 ##################Train
 # create the model
 batch_size = 256
@@ -41,6 +44,7 @@ locEmbeddings = 50
 textEmbeddings = 100
 nameEmbeddings = 100
 tzEmbeddings = 50
+validation_split = 0.01 #91279 samples for validation
 
 #callbacks = [
 #     EarlyStopping(monitor='val_loss', min_delta=1e-4, patience=6, verbose=1, restore_best_weights=True),
@@ -70,7 +74,7 @@ descriptionModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam
 start = time.time()
 descriptionHistory = descriptionModel.fit(trainDescription, classes,
                     epochs=nb_epoch, batch_size=batch_size,
-                    verbose=verbosity
+                    verbose=verbosity, validation_split=validation_split
                     )
 print("descriptionBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
 descriptionModel.save(modelPath +'descriptionBranchNorm.h5')
@@ -96,7 +100,7 @@ domainModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', me
 start = time.time()
 sourceHistory = domainModel.fit(trainDomain, classes,
                     epochs=nb_epoch, batch_size=batch_size,
-                    verbose=verbosity
+                    verbose=verbosity, validation_split=validation_split
                     )
 print("tldBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
 domainModel.save(modelPath + 'domainBranch.h5')
@@ -121,7 +125,7 @@ tldBranchModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam',
 start = time.time()
 sourceHistory = tldBranchModel.fit(trainTld, classes,
                     epochs=nb_epoch, batch_size=batch_size,
-                    verbose=verbosity
+                    verbose=verbosity, validation_split=validation_split
                     )
 print("tldBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
 tldBranchModel.save(modelPath + 'tldBranch.h5')
@@ -139,7 +143,7 @@ linkModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metr
 start = time.time()
 sourceHistory = linkModel.fit(np.concatenate((trainDomain, trainTld), axis=1), classes,
                                epochs=nb_epoch, batch_size=batch_size,
-                               verbose=verbosity
+                               verbose=verbosity, validation_split=validation_split
                                )
 print("linkModel finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
 linkModel.save(modelPath + 'linkModel.h5')
@@ -166,7 +170,7 @@ locationModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', 
 start = time.time()
 locationHistory = locationModel.fit(trainLocation, classes,
                     epochs=nb_epoch, batch_size=batch_size,
-                    verbose=verbosity
+                    verbose=verbosity, validation_split=validation_split
                     )
 print("locationHistory finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
 locationModel.save(modelPath +'locationBranchNorm.h5')
@@ -191,7 +195,7 @@ sourceModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', me
 start = time.time()
 sourceHistory = sourceModel.fit(trainSource, classes,
                     epochs=nb_epoch, batch_size=batch_size,
-                    verbose=verbosity
+                    verbose=verbosity, validation_split=validation_split
                     )
 print("sourceBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
 sourceModel.save(modelPath +'sourceBranch.h5')
@@ -219,7 +223,7 @@ textModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metr
 start = time.time()
 textHistory = textModel.fit(trainTexts, classes,
                     epochs=nb_epoch, batch_size=batch_size,
-                    verbose=verbosity
+                    verbose=verbosity, validation_split=validation_split
                     )
 print("textBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
 textModel.save(modelPath +'textBranchNorm.h5')
@@ -247,7 +251,7 @@ nameModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metr
 start = time.time()
 nameHistory = nameModel.fit(trainUserName, classes,
                     epochs=nb_epoch, batch_size=batch_size,
-                    verbose=verbosity
+                    verbose=verbosity, validation_split=validation_split
                     )
 print("nameBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
 nameModel.save(modelPath +'nameBranchNorm.h5')
@@ -274,7 +278,7 @@ tzBranchModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', 
 start = time.time()
 tzHistory = tzBranchModel.fit(trainTZ, classes,
                     epochs=nb_epoch, batch_size=batch_size,
-                    verbose=verbosity
+                    verbose=verbosity, validation_split=validation_split
                     )
 print("tzBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
 tzBranchModel.save(modelPath +'tzBranchNorm.h5')
@@ -300,7 +304,7 @@ utcBranchModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam',
 start = time.time()
 utcHistory = utcBranchModel.fit(trainUtc, classes,
                     epochs=nb_epoch, batch_size=batch_size,
-                    verbose=verbosity
+                    verbose=verbosity, validation_split=validation_split
                     )
 print("utcBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
 utcBranchModel.save(modelPath +'utcBranch.h5')
@@ -323,7 +327,7 @@ userLangModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', 
 start = time.time()
 userLangHistory = userLangModel.fit(trainUserLang, classes,
                     epochs=nb_epoch, batch_size=batch_size,
-                    verbose=verbosity
+                    verbose=verbosity, validation_split=validation_split
                     )
 print("userLangBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
 userLangModel.save(modelPath +'userLangBranch.h5')
@@ -339,7 +343,7 @@ start = time.time()
 
 timeHistory = tweetTimeModel.fit(trainCreatedAt, classes,
                                epochs=nb_epoch, batch_size=batch_size,
-                               verbose=verbosity
+                               verbose=verbosity, validation_split=validation_split
                                )
 print("tweetTimeModel finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
 tweetTimeModel.save(modelPath + 'tweetTimeBranch.h5')
@@ -364,7 +368,7 @@ start = time.time()
 
 timeHistory = tweetTimeModel.fit(trainCreatedAt, classes,
                                epochs=nb_epoch, batch_size=batch_size,
-                               verbose=verbosity
+                               verbose=verbosity, validation_split=validation_split
                                )
 print("tweetTimeModel finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
 tweetTimeModel.save(modelPath + 'tweetTimeBranch.h5')
@@ -387,7 +391,7 @@ start = time.time()
 
 categorialModelHistory = categorialModel.fit(trainData, classes,
                                               epochs=nb_epoch, batch_size=batch_size,
-                                              verbose=verbosity
+                                              verbose=verbosity, validation_split=validation_split
                                               )
 print("categorialModel finished after " +str(datetime.timedelta(time.time() - start)))
 categorialModel.save(modelPath + 'categorialModel.h5')
