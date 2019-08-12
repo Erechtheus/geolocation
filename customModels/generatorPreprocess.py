@@ -92,10 +92,13 @@ np.quantile(averageSentence, 0.75)#20.0 tokens
 
 MAX_TEXT_SEQUENCE_LENGTH = 20 #TODO; maybe perform no padding?
 
+char2Idx = {}
+for c in " 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.,-_()[]{}!?:;#'\"/\\%$`&=*+@^~|":
+    char2Idx[c] = len(char2Idx) + 1 #+1 as 0 is masking
 
 
 import pickle
-filehandler = open(modelPath + "germanVars.obj", "wb")
-pickle.dump((classMap,classEncoder, textTokenizer, MAX_TEXT_SEQUENCE_LENGTH), filehandler)
+filehandler = open(binaryPath + "germanVars.obj", "wb")
+pickle.dump((classMap,classEncoder, textTokenizer, MAX_TEXT_SEQUENCE_LENGTH, unknownClass, char2Idx), filehandler)
 filehandler.close()
 
