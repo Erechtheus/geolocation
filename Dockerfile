@@ -24,6 +24,9 @@ CMD ["python", "./webservice.py"]
 ##Contact docker webservice
 #http://127.0.0.1:5000/predictText?text=Montmartre%20is%20truly%20beautiful
 
+##Export docker container
+#docker save geoloc > geolocV2.tar
+
 ########################### Other commands ###########################
 ##list images
 #docker images -a
