@@ -62,7 +62,7 @@ def predictText():
         predict = textBranch.predict(textSequences)
 
         # Print the topN
-        result = []
+        hits = []
         for index in reversed(predict.argsort()[0][-maxCities:]):
             print("%s with score=%.3f" % (colnames[index], float(predict[0][index])))
             my_dict = {
@@ -71,9 +71,11 @@ def predictText():
                 'lat': placeMedian[colnames[index]][0],
                 'lon': placeMedian[colnames[index]][1]
             }
-            result.append(json.dumps(my_dict, indent=4))
-        print(result)
-        return Response(json.dumps(result, indent=4), mimetype='application/json')
+            hits.append(my_dict)
+        x= {"query":text,
+            "results":hits}
+        print(hits)
+        return Response(json.dumps(x, indent=4), mimetype='application/json')
 
 #Has some issues with json escape character //
 """
