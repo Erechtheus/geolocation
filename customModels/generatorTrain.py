@@ -4,29 +4,21 @@
 #os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 import datetime
-import gzip
-import string
-import time
-from collections import Counter
-
 import math
-import numpy as np
+import time
+
 from keras import Input
 from keras import Model
-from keras.layers import Dropout, Dense, BatchNormalization, SpatialDropout1D, LSTM
+from keras.layers import Dropout, Dense, BatchNormalization, LSTM
 from keras.layers.embeddings import Embedding
-from keras.preprocessing.sequence import pad_sequences
-from keras.preprocessing.text import Tokenizer
-from sklearn.preprocessing import LabelEncoder
 from keras.layers.merge import concatenate
 
-
-from representation import parseJsonLine, parseJsonLineWithPlace
+from customModels.generatorUtils import batch_generator
 
 binaryPath= 'data/binaries/'    #Place where the serialized training data is
 modelPath= 'data/models/'       #Place to store the models
-trainFile="/home/philippe/PycharmProjects/geolocation/train.json.gz"
-testFile="/home/philippe/PycharmProjects/geolocation/test.json.gz"
+trainFile="/home/philippe/Desktop/train.json.gz"
+testFile="/home/philippe/Desktop/test.json.gz"
 
 
 ##################Train
@@ -37,95 +29,12 @@ verbosity=2
 
 
 textEmbeddings = 100
-unknownClass = "unknownLocation" #place holder for unknown classes
 
 
 import pickle
 
-file = open(modelPath +"germanVars.obj",'rb')
-classMap,classEncoder, textTokenizer, MAX_TEXT_SEQUENCE_LENGTH = pickle.load(file)
-
-char2Idx = {}
-for c in " 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.,-_()[]{}!?:;#'\"/\\%$`&=*+@^~|":
-    char2Idx[c] = len(char2Idx) + 1 #+1 as 0 is masking
-
-def docs2chars(docs, char2Idx):
-
-    #We create a three dimensional tensor with
-    #Number of samples; Max number of tokens; Max number of characters
-    nSamples = len(docs)                                            #Number of samples
-    maxTokensSentences = max([len(x) for x in docs])                #Max token per sentence
-    maxCharsToken = max([max([len(y) for y in x]) for x in docs])     #Max chars per token
-
-    x = np.zeros((nSamples,
-                  maxTokensSentences,
-                  maxCharsToken
-                  )).astype('int32')#probably int32 is to large
-
-    for i, doc in enumerate(docs):
-        for j, token in enumerate(doc):
-            tokenRepresentation = [char2Idx.get(char, len(char2Idx) + 1) for char in token]
-            x[i, j, :len(tokenRepresentation)] = tokenRepresentation
-
-    return(x)
-
-
-
-
-
-
-
-def batch_generator(twitterFile, batch_size=64):
-    with gzip.open(twitterFile, 'rb') as file:
-        trainTexts = []; trainLabels=[]
-        for line in file:
-
-            #Reset after each batch
-            if len(trainTexts) == batch_size:
-                trainTexts = []; trainLabels=[]
-
-            instance = parseJsonLineWithPlace(line.decode('utf-8'))
-            trainTexts.append(instance.text)
-
-            if instance.place._name not in classEncoder.classes_:
-                trainLabels.append(unknownClass)
-            else:
-                trainLabels.append(instance.place._name)
-
-            if len(trainTexts) == batch_size:
-
-                #Character embeddings
-                trainCharacters = docs2chars(trainTexts, char2Idx=char2Idx)
-
-                #Text Tweet
-                trainTexts = textTokenizer.texts_to_sequences(trainTexts)
-                trainTexts = np.asarray(trainTexts)  # Convert to ndArraytop
-                trainTexts = pad_sequences(trainTexts, maxlen=MAX_TEXT_SEQUENCE_LENGTH)
-
-
-                # class label
-                classes = classEncoder.transform(trainLabels)
-
-                #yield trainTexts, classes
-                yield ({
-                        'inputText' : trainTexts,
-                        'char_embedding' : trainCharacters,
-                        },
-                       classes
-                       )
-        #Return the last batch of instances after reaching end of file...
-        if len(trainTexts) > 0:
-            trainTexts = textTokenizer.texts_to_sequences(trainTexts)
-            trainTexts = np.asarray(trainTexts)  # Convert to ndArraytop
-            trainTexts = pad_sequences(trainTexts, maxlen=MAX_TEXT_SEQUENCE_LENGTH)
-
-            # class label
-            classes = classEncoder.transform(trainLabels)
-            yield ({
-                       'inputText': trainTexts,
-                   },
-                   classes
-            )
+file = open(binaryPath +"germanVars.obj",'rb')
+classMap,classEncoder, textTokenizer, MAX_TEXT_SEQUENCE_LENGTH, unknownClass, char2Idx = pickle.load(file)
 
 
 
@@ -189,8 +98,8 @@ numberOfTestingSamples=int(stdoutdata)
 
 
 start = time.time()
-textHistory = textModel.fit_generator(generator=batch_generator(twitterFile=trainFile, batch_size=batch_size), steps_per_epoch=math.ceil(numberOfTrainingSamples / batch_size), #numberOfTrainingSamples
-                                      validation_data=batch_generator(twitterFile=testFile, batch_size=batch_size), validation_steps=math.ceil(numberOfTestingSamples/batch_size), #numberOfTestingSamples
+textHistory = textModel.fit_generator(generator=batch_generator(twitterFile=trainFile, classEncoder=classEncoder, textTokenizer=textTokenizer, maxlen=MAX_TEXT_SEQUENCE_LENGTH, char2Idx=char2Idx, unknownClass=unknownClass,  batch_size=batch_size), steps_per_epoch=math.ceil(numberOfTrainingSamples / batch_size), #numberOfTrainingSamples
+                                      validation_data=batch_generator(twitterFile=testFile, classEncoder=classEncoder, textTokenizer=textTokenizer, maxlen=MAX_TEXT_SEQUENCE_LENGTH, char2Idx=char2Idx, unknownClass=unknownClass, batch_size=batch_size), validation_steps=math.ceil(numberOfTestingSamples/batch_size), #numberOfTestingSamples
                                       epochs=nb_epoch, verbose=verbosity
                                       )
 print("textBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
@@ -198,43 +107,3 @@ textModel.save(modelPath +'germanText.h5')
 
 
 
-"""
-###################
-#Let's test this shit :)
-from keras.models import load_model
-import pickle
-
-modelPath= 'data/models/'       #Place to store the models
-file = open(modelPath +"germanVars.obj",'rb')
-classMap,classEncoder, textTokenizer = pickle.load(file)
-
-textModel = load_model(modelPath +'germanText.h5')
-for prediction in textModel.predict_generator(generator=batch_generator(twitterFile=testFile, batch_size=batch_size),steps = math.ceil(numberOfTestingSamples/batch_size), verbose=1):
-    print(prediction)
-"""
-
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import precision_recall_fscore_support
-
-predictions = []
-groundTruths = []
-i = 0
-for batch in batch_generator(twitterFile=testFile, batch_size=batch_size):
-    print(i)
-    i = i +1
-    tmp = textModel.predict_on_batch(batch[0])
-
-    prediction = np.argmax(tmp, axis=1)
-    predictions.append(prediction)
-    groundTruth = batch[1]
-    groundTruths.append(groundTruth)
-
-matrix = confusion_matrix(groundTruths, predictions)
-
-accuracy_score(groundTruth, prediction)
-#precision_recall_fscore_support(groundTruth, prediction)
-#multilabel_confusion_matrix(groundTruth, prediction)
-import matplotlib.pyplot as plt
-plt.imshow(matrix, cmap='binary', interpolation='None')
-plt.show()
