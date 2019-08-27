@@ -24,9 +24,6 @@ modelPath= 'data/models/'       #Place to store the models
 file = open(binaryPath +"processors.obj",'rb')
 descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, placeMedian, classes, colnames, classEncoder  = pickle.load(file)
 
-file = open(binaryPath +"vars.obj",'rb')
-MAX_DESC_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX_NAME_SEQUENCE_LENGTH, MAX_TZ_SEQUENCE_LENGTH = pickle.load(file)
-
 file = open(binaryPath +"data.obj",'rb')
 trainDescription,  trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt= pickle.load(file)
 
@@ -58,7 +55,7 @@ validation_split = 0.01 #91279 samples for validation
 descriptionBranchI = Input(shape=(None,), name="inputDescription")
 descriptionBranch = Embedding(descriptionTokenizer.num_words,
                                 descriptionEmbeddings,
-                                input_length=MAX_DESC_SEQUENCE_LENGTH,
+                                #input_length=MAX_DESC_SEQUENCE_LENGTH,
                                 mask_zero=True
                                 )(descriptionBranchI)
 descriptionBranch = SpatialDropout1D(rate=0.2)(descriptionBranch)
@@ -154,7 +151,7 @@ linkModel.save(modelPath + 'linkModel.h5')
 locationBranchI = Input(shape=(None,), name="inputLocation")
 locationBranch = Embedding(locationTokenizer.num_words,
                              locEmbeddings,
-                    input_length=MAX_LOC_SEQUENCE_LENGTH,
+                    #input_length=MAX_LOC_SEQUENCE_LENGTH,
                     mask_zero=True
                     )(locationBranchI)
 locationBranch = SpatialDropout1D(rate=0.2)(locationBranch)
@@ -207,7 +204,7 @@ sourceModel.save(modelPath +'sourceBranch.h5')
 textBranchI = Input(shape=(None,), name="inputText")
 textBranch = Embedding(textTokenizer.num_words,
                          textEmbeddings,
-                        input_length=MAX_TEXT_SEQUENCE_LENGTH,
+                        #input_length=MAX_TEXT_SEQUENCE_LENGTH,
                         mask_zero=True
                          )(textBranchI)
 textBranch = SpatialDropout1D(rate=0.2)(textBranch)
@@ -235,7 +232,7 @@ textModel.save(modelPath +'textBranchNorm.h5')
 nameBranchI = Input(shape=(None,), name="inputName")
 nameBranch = Embedding(nameTokenizer.num_words,
                          nameEmbeddings,
-                         input_length=MAX_NAME_SEQUENCE_LENGTH,
+                         #input_length=MAX_NAME_SEQUENCE_LENGTH,
                         mask_zero=True
                          )(nameBranchI)
 nameBranch = SpatialDropout1D(rate=0.2)(nameBranch)
@@ -262,7 +259,7 @@ nameModel.save(modelPath +'nameBranchNorm.h5')
 tzBranchI = Input(shape=(None,), name="inputTimeZone")
 tzBranch = Embedding(timeZoneTokenizer.num_words,
                        tzEmbeddings,
-                       input_length=MAX_TZ_SEQUENCE_LENGTH,
+                       #input_length=MAX_TZ_SEQUENCE_LENGTH,
                         mask_zero=True
                        )(tzBranchI)
 tzBranch = SpatialDropout1D(rate=0.2)(tzBranch)

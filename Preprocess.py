@@ -51,10 +51,6 @@ for key in placeSummary.keys():
     placeMedian[key] = (lat,lon)
 del(placeSummary)
 
-#Rounds minutes to 15 Minutes ranges
-def roundMinutes(x, base=15):
-    return int(base * round(float(x)/base))
-
 ###Extract relevant parts and store in list...
 trainLabels = []  # list of label ids
 
@@ -67,7 +63,6 @@ trainUserName=[]
 trainTZ=[]
 trainUtc=[]
 trainUserLang =[]
-#trainCreatedAt= []
 trainSinTime = []
 trainCosTime = []
 for key in tweetToTextMapping:
@@ -82,7 +77,6 @@ for key in tweetToTextMapping:
     trainTZ.append(str(tweetToTextMapping[key].timezone))
     trainUtc.append(str(tweetToTextMapping[key].utcOffset))
     trainUserLang.append(str(tweetToTextMapping[key].userLanguage))
-    #trainCreatedAt.append(str(tweetToTextMapping[key].createdAt.hour) +"-" +str(roundMinutes(tweetToTextMapping[key].createdAt.minute)))
 
     t = tweetToTextMapping[key].createdAt.hour * 60 * 60 + tweetToTextMapping[key].createdAt.minute * 60 + tweetToTextMapping[key].createdAt.second
     t = 2*np.pi*t/(24*60*60)
@@ -104,7 +98,6 @@ print(str(len(set(trainLabels))) +" different places known") #Number of differen
 
 classEncoder = LabelEncoder()
 classEncoder.fit(trainLabels)
-
 classes = classEncoder.transform(trainLabels)
 
 #Map class int representation to
@@ -112,22 +105,19 @@ colnames = [None]*len(set(classes))
 for i in range(len(classes)):
     colnames[classes[i]] =  trainLabels[i]
 
-
 #2.) Tokenize texts
 def my_filter():
     f = string.punctuation
     f += '\t\n\r…”'
     return f
 
-
 #User-Description
 print("User Description")
-MAX_DESC_SEQUENCE_LENGTH=10 #Median is 6
 descriptionTokenizer = Tokenizer(num_words=100000, filters=my_filter()) #Keep only top-N words
 descriptionTokenizer.fit_on_texts(trainDescription)
 trainDescription = descriptionTokenizer.texts_to_sequences(trainDescription)
 trainDescription = np.asarray(trainDescription) #Convert to ndArraytop
-trainDescription = pad_sequences(trainDescription, maxlen=MAX_DESC_SEQUENCE_LENGTH)
+trainDescription = pad_sequences(trainDescription)
 
 #Link-Mentions
 print("Links")
@@ -155,12 +145,11 @@ trainTld = tldEncoder.transform(trainTld)
 
 #Location
 print("User Location")
-MAX_LOC_SEQUENCE_LENGTH=3
 locationTokenizer = Tokenizer(num_words=80000, filters=my_filter()) #Keep only top-N words
 locationTokenizer.fit_on_texts(trainLocation)
 trainLocation = locationTokenizer.texts_to_sequences(trainLocation)
 trainLocation = np.asarray(trainLocation) #Convert to ndArraytop
-trainLocation = pad_sequences(trainLocation, maxlen=MAX_LOC_SEQUENCE_LENGTH)
+trainLocation = pad_sequences(trainLocation)
 
 #Source
 print("Device source")
@@ -170,30 +159,27 @@ trainSource = sourceEncoder.transform(trainSource)
 
 #Text
 print("Tweet Text")
-MAX_TEXT_SEQUENCE_LENGTH=10
 textTokenizer = Tokenizer(num_words=100000, filters=my_filter()) #Keep only top-N words
 textTokenizer.fit_on_texts(trainTexts)
 trainTexts = textTokenizer.texts_to_sequences(trainTexts)
 trainTexts = np.asarray(trainTexts) #Convert to ndArraytop
-trainTexts = pad_sequences(trainTexts, maxlen=MAX_TEXT_SEQUENCE_LENGTH)
+trainTexts = pad_sequences(trainTexts)
 
 #Username
 print("Username")
-MAX_NAME_SEQUENCE_LENGTH=3
 nameTokenizer = Tokenizer(num_words=20000, filters=my_filter()) #Keep only top-N words
 nameTokenizer.fit_on_texts(trainUserName)
 trainUserName = nameTokenizer.texts_to_sequences(trainUserName)
 trainUserName = np.asarray(trainUserName) #Convert to ndArraytop
-trainUserName = pad_sequences(trainUserName, maxlen=MAX_NAME_SEQUENCE_LENGTH)
+trainUserName = pad_sequences(trainUserName)
 
 #TimeZone
 print("TimeZone")
-MAX_TZ_SEQUENCE_LENGTH=4
 timeZoneTokenizer = Tokenizer(num_words=300) #Keep only top-N words
 timeZoneTokenizer.fit_on_texts(trainTZ)
 trainTZ = timeZoneTokenizer.texts_to_sequences(trainTZ)
 trainTZ = np.asarray(trainTZ) #Convert to ndArraytop
-trainTZ = pad_sequences(trainTZ, maxlen=MAX_TZ_SEQUENCE_LENGTH)
+trainTZ = pad_sequences(trainTZ)
 
 #UTC
 print("UTC")
@@ -207,22 +193,10 @@ langEncoder = LabelEncoder()
 langEncoder.fit(trainUserLang)
 trainUserLang = langEncoder.transform(trainUserLang)
 
-#Tweet-Time (120 steps)
-#We decided to use the time directly, instead of using the time-windows
-#print("Tweet Time")
-#timeEncoder = LabelEncoder()
-#timeEncoder.fit(trainCreatedAt)
-#trainCreatedAt = timeEncoder.transform(trainCreatedAt)
-
 #####Save result of preprocessing
 #1.) Save relevant processing data
 filehandler = open(binaryPath + "processors.obj", "wb")
 pickle.dump((descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, placeMedian, classes, colnames, classEncoder ), filehandler)
-filehandler.close()
-
-#Save important variables
-filehandler = open(binaryPath + "vars.obj", "wb")
-pickle.dump((MAX_DESC_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX_NAME_SEQUENCE_LENGTH, MAX_TZ_SEQUENCE_LENGTH), filehandler)
 filehandler.close()
 
 #2.) Save converted training data

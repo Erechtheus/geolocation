@@ -38,9 +38,6 @@ tweetTimeBranch = load_model(modelPath +'tweetTimeBranch.h5')
 file = open(binaryPath +"processors.obj",'rb')
 descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, placeMedian, classes, colnames, classEncoder  = pickle.load(file)
 
-file = open(binaryPath +"vars.obj",'rb')
-MAX_DESC_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX_NAME_SEQUENCE_LENGTH, MAX_TZ_SEQUENCE_LENGTH = pickle.load(file)
-
 file = open(binaryPath +"data.obj",'rb')
 trainDescription,  trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt= pickle.load(file)
 
@@ -85,12 +82,6 @@ categorial = np.zeros((len(trainUserLang), len(langEncoder.classes_)), dtype="bo
 for i in range(len(trainUserLang)):
     categorial[i, trainUserLang[i]] = True
 trainUserLang = categorial
-
-#10) #Tweet-Time (120)
-#categorial = np.zeros((len(trainCreatedAt), len(timeEncoder.classes_)), dtype="bool")
-#for i in range(len(trainCreatedAt)):
-#    categorial[i, trainCreatedAt[i]] = True
-#trainCreatedAt = categorial
 
 
 #####################
@@ -161,9 +152,9 @@ print("final_model finished after " +str(datetime.timedelta(seconds=time.time() 
 
 
 model_yaml = final_model.to_yaml()
-with open(modelPath +"finalmodel2.yaml", "w") as yaml_file:
+with open(modelPath +"finalmodel.yaml", "w") as yaml_file:
     yaml_file.write(model_yaml)
-final_model.save_weights(modelPath +'finalmodelWeight2.h5')
+final_model.save_weights(modelPath +'finalmodelWeight.h5')
 
 #########################
 for layer in final_model.layers:
@@ -181,6 +172,6 @@ print("final_model finished after " +str(datetime.timedelta(seconds=time.time() 
 
 
 model_yaml = final_model.to_yaml()
-with open(modelPath +"finalmodel3.yaml", "w") as yaml_file:
+with open(modelPath +"finalmodel2.yaml", "w") as yaml_file:
     yaml_file.write(model_yaml)
-final_model.save_weights(modelPath +'finalmodelWeight3.h5')
+final_model.save_weights(modelPath +'finalmodelWeight2.h5')

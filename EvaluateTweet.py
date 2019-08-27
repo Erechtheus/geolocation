@@ -34,11 +34,11 @@ userLangBranch = load_model(modelPath + 'userLangBranch.h5')
 tweetTimeBranch = load_model(modelPath +'tweetTimeBranch.h5')
 
 #Scratch Model:
-#yaml_file = open(modelPath +'finalmodel.yaml', 'r')
-#loaded_model_yaml = yaml_file.read()
-#yaml_file.close()
-#final_model = model_from_yaml(loaded_model_yaml)
-#final_model.load_weights(modelPath +"finalmodelWeight.h5")
+yaml_file = open(modelPath +'finalmodel.yaml', 'r')
+loaded_model_yaml = yaml_file.read()
+yaml_file.close()
+final_model = model_from_yaml(loaded_model_yaml)
+final_model.load_weights(modelPath +"finalmodelWeight.h5")
 
 
 #Retrained model
@@ -75,9 +75,6 @@ def eval(predictions, type='TWEET', predictToFile='predictionsTmp.json'):
 file = open(binaryPath +"processors.obj",'rb')
 descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, placeMedian, classes, colnames, classEncoder  = pickle.load(file)
 
-file = open(binaryPath +"vars.obj",'rb')
-MAX_DESC_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX_NAME_SEQUENCE_LENGTH, MAX_TZ_SEQUENCE_LENGTH = pickle.load(file)
-
 def roundMinutes(x, base=15):
     return int(base * round(float(x)/base))
 
@@ -98,7 +95,6 @@ for line in f:
     testTimeZone.append(str(instance.timezone))
     testUtc.append(str(instance.utcOffset))
     testUserLang.append(str(instance.userLanguage))
-    #testCreatedAt.append(str(instance.createdAt.hour) + "-" + str(roundMinutes(instance.createdAt.minute)))
 
     t = instance.createdAt.hour * 60 * 60 + instance.createdAt.minute * 60 + instance.createdAt.second
     t = 2*np.pi*t/(24*60*60)
@@ -113,7 +109,7 @@ for line in f:
 #1.) User-Description
 descriptionSequences = descriptionTokenizer.texts_to_sequences(testDescription)
 descriptionSequences = np.asarray(descriptionSequences)  # Convert to ndArray
-descriptionSequences = pad_sequences(descriptionSequences, maxlen=MAX_DESC_SEQUENCE_LENGTH)
+descriptionSequences = pad_sequences(descriptionSequences)
 
 predict = descriptionBranch.predict(descriptionSequences)
 print("User description=")
@@ -148,7 +144,7 @@ eval(predict)
 #3.) Location
 locationSequences = locationTokenizer.texts_to_sequences(testLocations)
 locationSequences = np.asarray(locationSequences)  # Convert to ndArray
-locationSequences = pad_sequences(locationSequences, maxlen=MAX_LOC_SEQUENCE_LENGTH)
+locationSequences = pad_sequences(locationSequences)
 
 print("Location=")
 predict = locationBranch.predict(locationSequences)
@@ -176,7 +172,7 @@ eval(predict)
 #5.) Text
 textSequences = textTokenizer.texts_to_sequences(testTexts)
 textSequences = np.asarray(textSequences)  # Convert to ndArray
-textSequences = pad_sequences(textSequences, maxlen=MAX_TEXT_SEQUENCE_LENGTH)
+textSequences = pad_sequences(textSequences)
 
 print("Text=")
 predict = textBranch.predict(textSequences)
@@ -188,7 +184,7 @@ eval(predict)
 #6.) Username
 userSequences = nameTokenizer.texts_to_sequences(testUserName)
 userSequences = np.asarray(userSequences)  # Convert to ndArray
-userSequences = pad_sequences(userSequences, maxlen=MAX_NAME_SEQUENCE_LENGTH)
+userSequences = pad_sequences(userSequences)
 
 print("Username=")
 predict = nameBranch.predict(userSequences)
@@ -199,7 +195,7 @@ eval(predict)
 #7.) TimeZone
 tzSequences = timeZoneTokenizer.texts_to_sequences(testTimeZone)
 tzSequences = np.asarray(tzSequences)  # Convert to ndArray
-tzSequences = pad_sequences(tzSequences, maxlen=MAX_TZ_SEQUENCE_LENGTH)
+tzSequences = pad_sequences(tzSequences)
 
 print("TimeZone=")
 predict = tzBranch.predict(tzSequences)
@@ -256,14 +252,15 @@ eval(predict)
 
 
 #11.) Merged model
-#predict = final_model.predict([descriptionSequences, testDomain, testTld, locationSequences, testSource, textSequences, userSequences, tzSequences, testUtc, testUserLang, testCreatedAt ])
-#eval(predict)
+print("Merged=")
+predict = final_model.predict([descriptionSequences, testDomain, testTld, locationSequences, testSource, textSequences, userSequences, tzSequences, testUtc, testUserLang, np.column_stack((testSinTime, testCosTime))])
+eval(predict)
 #/home/philippe/PycharmProjects/deepLearning/predictions.json& TWEET& 0.417& 59.0& 1616.4
 
 
 
 #12.) Merged model with original weights; without 2 parts which are not pretrained; maybe include?
-print("Merged=")
+print("Merged with full retraining=")
 predict = final_modelTrainable.predict([descriptionSequences, testDomain, testTld, locationSequences, testSource, textSequences, userSequences, tzSequences, testUtc, testUserLang, np.column_stack((testSinTime, testCosTime)) ])
 eval(predict)
 #/home/philippe/PycharmProjects/deepLearning/predictions.json& TWEET& 0.43& 47.6& 1179.4
