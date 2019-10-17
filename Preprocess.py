@@ -196,10 +196,10 @@ trainUserLang = langEncoder.transform(trainUserLang)
 #####Save result of preprocessing
 #1.) Save relevant processing data
 filehandler = open(binaryPath + "processors.obj", "wb")
-pickle.dump((descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, placeMedian, classes, colnames, classEncoder ), filehandler)
+pickle.dump((descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, placeMedian, colnames, classEncoder ), filehandler)
 filehandler.close()
 
 #2.) Save converted training data
 filehandler = open(binaryPath + "data.obj", "wb")
-pickle.dump((trainDescription, trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt), filehandler, protocol=4)
+pickle.dump((trainDescription, trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt, classes), filehandler, protocol=4)
 filehandler.close()

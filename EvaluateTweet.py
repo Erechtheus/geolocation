@@ -73,7 +73,7 @@ def eval(predictions, type='TWEET', predictToFile='predictionsTmp.json'):
 #############################
 #Evaluate the models on the test data
 file = open(binaryPath +"processors.obj",'rb')
-descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, placeMedian, classes, colnames, classEncoder  = pickle.load(file)
+descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, placeMedian, colnames, classEncoder  = pickle.load(file)
 
 def roundMinutes(x, base=15):
     return int(base * round(float(x)/base))

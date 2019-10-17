@@ -9,13 +9,9 @@ modelPath= 'data/models/'       #Place to store the models
 #Load Model
 textBranch = load_model(modelPath +'/textBranchNorm.h5')
 
-#Load tokenizers, and mapping
+#Load preprocessed data...
 file = open(binaryPath +"processors.obj",'rb')
-descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, placeMedian, classes, colnames, classEncoder  = pickle.load(file)
-
-#Load properties from model
-file = open(binaryPath +"vars.obj",'rb')
-MAX_DESC_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX_NAME_SEQUENCE_LENGTH, MAX_TZ_SEQUENCE_LENGTH = pickle.load(file)
+descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, placeMedian, colnames, classEncoder  = pickle.load(file)
 
 #Predict text (e.g., 'Montmartre is truly beautiful')
 testTexts=[];
@@ -23,7 +19,7 @@ testTexts.append("Montmartre is truly beautiful")
 
 textSequences = textTokenizer.texts_to_sequences(testTexts)
 textSequences = np.asarray(textSequences)
-textSequences = pad_sequences(textSequences, maxlen=MAX_TEXT_SEQUENCE_LENGTH)
+textSequences = pad_sequences(textSequences)
 
 predict = textBranch.predict(textSequences)
 

@@ -35,11 +35,12 @@ utcBranch = load_model(modelPath +'utcBranch.h5')
 userLangBranch = load_model(modelPath +'userLangBranch.h5')
 tweetTimeBranch = load_model(modelPath +'tweetTimeBranch.h5')
 
+#Load preprocessed data...
 file = open(binaryPath +"processors.obj",'rb')
-descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, placeMedian, classes, colnames, classEncoder  = pickle.load(file)
+descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, placeMedian, colnames, classEncoder  = pickle.load(file)
 
 file = open(binaryPath +"data.obj",'rb')
-trainDescription,  trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt= pickle.load(file)
+trainDescription, trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt, classes= pickle.load(file)
 
 #Shuffle train-data
 trainDescription,  trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt, classes = shuffle(trainDescription,  trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt, classes, random_state=1202)

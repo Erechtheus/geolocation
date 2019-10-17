@@ -9,7 +9,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = ""
 import pickle
 import numpy as np
 import time
-from keras.layers import Dropout, Dense, BatchNormalization, SpatialDropout1D, LSTM, concatenate
+from keras.layers import Dropout, Dense, BatchNormalization, SpatialDropout1D, LSTM
 from keras.layers.embeddings import Embedding
 import math
 import datetime
@@ -22,10 +22,10 @@ modelPath= 'data/models/'       #Place to store the models
 
 #Load preprocessed data...
 file = open(binaryPath +"processors.obj",'rb')
-descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, placeMedian, classes, colnames, classEncoder  = pickle.load(file)
+descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, placeMedian, colnames, classEncoder  = pickle.load(file)
 
 file = open(binaryPath +"data.obj",'rb')
-trainDescription,  trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt= pickle.load(file)
+trainDescription, trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt, classes= pickle.load(file)
 
 #Shuffle train-data
 trainDescription,  trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt, classes = shuffle(trainDescription,  trainLocation, trainDomain, trainTld, trainSource, trainTexts, trainUserName, trainTZ, trainUtc, trainUserLang, trainCreatedAt, classes, random_state=1202)
@@ -43,11 +43,11 @@ nameEmbeddings = 100
 tzEmbeddings = 50
 validation_split = 0.01 #91279 samples for validation
 
-#callbacks = [
-#     EarlyStopping(monitor='val_loss', min_delta=1e-4, patience=6, verbose=1, restore_best_weights=True),
+callbacks = [
+#     EarlyStopping(monitor='val_loss', min_delta=1e-4, patience=2, verbose=1, restore_best_weights=True),
 #     ReduceLROnPlateau(monitor='val_loss', factor=0.1, min_delta=1e-4, patience=2, cooldown=1, verbose=1),
 ##     ModelCheckpoint(filepath='twitter.h5', monitor='loss', verbose=0, save_best_only=True),
-#]
+]
 
 
 ####################
@@ -58,7 +58,7 @@ descriptionBranch = Embedding(descriptionTokenizer.num_words,
                                 #input_length=MAX_DESC_SEQUENCE_LENGTH,
                                 mask_zero=True
                                 )(descriptionBranchI)
-descriptionBranch = SpatialDropout1D(rate=0.2)(descriptionBranch)
+descriptionBranch = SpatialDropout1D(rate=0.2)(descriptionBranch) #Masks the same embedding element for all tokens
 descriptionBranch = BatchNormalization()(descriptionBranch)
 descriptionBranch = Dropout(0.2)(descriptionBranch)
 descriptionBranch = LSTM(units=30)(descriptionBranch)
@@ -71,7 +71,7 @@ descriptionModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam
 start = time.time()
 descriptionHistory = descriptionModel.fit(trainDescription, classes,
                     epochs=nb_epoch, batch_size=batch_size,
-                    verbose=verbosity, validation_split=validation_split
+                    verbose=verbosity, validation_split=validation_split,callbacks=callbacks
                     )
 print("descriptionBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
 descriptionModel.save(modelPath +'descriptionBranchNorm.h5')
@@ -97,7 +97,7 @@ domainModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', me
 start = time.time()
 sourceHistory = domainModel.fit(trainDomain, classes,
                     epochs=nb_epoch, batch_size=batch_size,
-                    verbose=verbosity, validation_split=validation_split
+                    verbose=verbosity, validation_split=validation_split,callbacks=callbacks
                     )
 print("tldBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
 domainModel.save(modelPath + 'domainBranch.h5')
@@ -122,7 +122,7 @@ tldBranchModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam',
 start = time.time()
 sourceHistory = tldBranchModel.fit(trainTld, classes,
                     epochs=nb_epoch, batch_size=batch_size,
-                    verbose=verbosity, validation_split=validation_split
+                    verbose=verbosity, validation_split=validation_split,callbacks=callbacks
                     )
 print("tldBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
 tldBranchModel.save(modelPath + 'tldBranch.h5')
@@ -140,7 +140,7 @@ linkModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metr
 start = time.time()
 sourceHistory = linkModel.fit(np.concatenate((trainDomain, trainTld), axis=1), classes,
                                epochs=nb_epoch, batch_size=batch_size,
-                               verbose=verbosity, validation_split=validation_split
+                               verbose=verbosity, validation_split=validation_split,callbacks=callbacks
                                )
 print("linkModel finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
 linkModel.save(modelPath + 'linkModel.h5')
@@ -154,7 +154,7 @@ locationBranch = Embedding(locationTokenizer.num_words,
                     #input_length=MAX_LOC_SEQUENCE_LENGTH,
                     mask_zero=True
                     )(locationBranchI)
-locationBranch = SpatialDropout1D(rate=0.2)(locationBranch)
+locationBranch = SpatialDropout1D(rate=0.2)(locationBranch)#Masks the same embedding element for all tokens
 locationBranch = BatchNormalization()(locationBranch)
 locationBranch = Dropout(0.2)(locationBranch)
 locationBranch = LSTM(units=30)(locationBranch)
@@ -167,7 +167,7 @@ locationModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', 
 start = time.time()
 locationHistory = locationModel.fit(trainLocation, classes,
                     epochs=nb_epoch, batch_size=batch_size,
-                    verbose=verbosity, validation_split=validation_split
+                    verbose=verbosity, validation_split=validation_split,callbacks=callbacks
                     )
 print("locationHistory finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
 locationModel.save(modelPath +'locationBranchNorm.h5')
@@ -192,7 +192,7 @@ sourceModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', me
 start = time.time()
 sourceHistory = sourceModel.fit(trainSource, classes,
                     epochs=nb_epoch, batch_size=batch_size,
-                    verbose=verbosity, validation_split=validation_split
+                    verbose=verbosity, validation_split=validation_split,callbacks=callbacks
                     )
 print("sourceBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
 sourceModel.save(modelPath +'sourceBranch.h5')
@@ -207,7 +207,7 @@ textBranch = Embedding(textTokenizer.num_words,
                         #input_length=MAX_TEXT_SEQUENCE_LENGTH,
                         mask_zero=True
                          )(textBranchI)
-textBranch = SpatialDropout1D(rate=0.2)(textBranch)
+textBranch = SpatialDropout1D(rate=0.2)(textBranch) #Masks the same embedding element for all tokens
 textBranch = BatchNormalization()(textBranch)
 textBranch = Dropout(0.2)(textBranch)
 textBranch = LSTM(units=30)(textBranch)
@@ -220,7 +220,7 @@ textModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metr
 start = time.time()
 textHistory = textModel.fit(trainTexts, classes,
                     epochs=nb_epoch, batch_size=batch_size,
-                    verbose=verbosity, validation_split=validation_split
+                    verbose=verbosity, validation_split=validation_split,callbacks=callbacks
                     )
 print("textBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
 textModel.save(modelPath +'textBranchNorm.h5')
@@ -235,7 +235,7 @@ nameBranch = Embedding(nameTokenizer.num_words,
                          #input_length=MAX_NAME_SEQUENCE_LENGTH,
                         mask_zero=True
                          )(nameBranchI)
-nameBranch = SpatialDropout1D(rate=0.2)(nameBranch)
+nameBranch = SpatialDropout1D(rate=0.2)(nameBranch) #Masks the same embedding element for all tokens
 nameBranch = BatchNormalization()(nameBranch)
 nameBranch = Dropout(0.2)(nameBranch)
 nameBranch = LSTM(units=30)(nameBranch)
@@ -248,7 +248,7 @@ nameModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metr
 start = time.time()
 nameHistory = nameModel.fit(trainUserName, classes,
                     epochs=nb_epoch, batch_size=batch_size,
-                    verbose=verbosity, validation_split=validation_split
+                    verbose=verbosity, validation_split=validation_split,callbacks=callbacks
                     )
 print("nameBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
 nameModel.save(modelPath +'nameBranchNorm.h5')
@@ -262,7 +262,7 @@ tzBranch = Embedding(timeZoneTokenizer.num_words,
                        #input_length=MAX_TZ_SEQUENCE_LENGTH,
                         mask_zero=True
                        )(tzBranchI)
-tzBranch = SpatialDropout1D(rate=0.2)(tzBranch)
+tzBranch = SpatialDropout1D(rate=0.2)(tzBranch) #Masks the same embedding element for all tokens
 tzBranch = BatchNormalization()(tzBranch)
 tzBranch = Dropout(0.2)(tzBranch)
 tzBranch = LSTM(units=30)(tzBranch)
@@ -275,7 +275,7 @@ tzBranchModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', 
 start = time.time()
 tzHistory = tzBranchModel.fit(trainTZ, classes,
                     epochs=nb_epoch, batch_size=batch_size,
-                    verbose=verbosity, validation_split=validation_split
+                    verbose=verbosity, validation_split=validation_split,callbacks=callbacks
                     )
 print("tzBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
 tzBranchModel.save(modelPath +'tzBranchNorm.h5')
@@ -301,7 +301,7 @@ utcBranchModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam',
 start = time.time()
 utcHistory = utcBranchModel.fit(trainUtc, classes,
                     epochs=nb_epoch, batch_size=batch_size,
-                    verbose=verbosity, validation_split=validation_split
+                    verbose=verbosity, validation_split=validation_split,callbacks=callbacks
                     )
 print("utcBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
 utcBranchModel.save(modelPath +'utcBranch.h5')
@@ -324,7 +324,7 @@ userLangModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', 
 start = time.time()
 userLangHistory = userLangModel.fit(trainUserLang, classes,
                     epochs=nb_epoch, batch_size=batch_size,
-                    verbose=verbosity, validation_split=validation_split
+                    verbose=verbosity, validation_split=validation_split,callbacks=callbacks
                     )
 print("userLangBranch finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
 userLangModel.save(modelPath +'userLangBranch.h5')
@@ -340,7 +340,7 @@ start = time.time()
 
 timeHistory = tweetTimeModel.fit(trainCreatedAt, classes,
                                epochs=nb_epoch, batch_size=batch_size,
-                               verbose=verbosity, validation_split=validation_split
+                               verbose=verbosity, validation_split=validation_split,callbacks=callbacks
                                )
 print("tweetTimeModel finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
 tweetTimeModel.save(modelPath + 'tweetTimeBranch.h5')
@@ -365,7 +365,7 @@ start = time.time()
 
 timeHistory = tweetTimeModel.fit(trainCreatedAt, classes,
                                epochs=nb_epoch, batch_size=batch_size,
-                               verbose=verbosity, validation_split=validation_split
+                               verbose=verbosity, validation_split=validation_split,callbacks=callbacks
                                )
 print("tweetTimeModel finished after " +str(datetime.timedelta(seconds=round(time.time() - start))))
 tweetTimeModel.save(modelPath + 'tweetTimeBranch.h5')
@@ -388,7 +388,7 @@ start = time.time()
 
 categorialModelHistory = categorialModel.fit(trainData, classes,
                                               epochs=nb_epoch, batch_size=batch_size,
-                                              verbose=verbosity, validation_split=validation_split
+                                              verbose=verbosity, validation_split=validation_split,callbacks=callbacks
                                               )
 print("categorialModel finished after " +str(datetime.timedelta(time.time() - start)))
 categorialModel.save(modelPath + 'categorialModel.h5')

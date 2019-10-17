@@ -33,13 +33,9 @@ final_modelTrainable.load_weights(modelPath+"finalmodelWeight2.h5")
 graph = tf.get_default_graph()
 
 
-#Load tokenizers, and mapping
+#Load preprocessed data...
 file = open(binaryPath +"processors.obj",'rb')
-descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, placeMedian, classes, colnames, classEncoder  = pickle.load(file)
-
-#Load properties from model
-file = open(binaryPath +"vars.obj",'rb')
-MAX_DESC_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX_NAME_SEQUENCE_LENGTH, MAX_TZ_SEQUENCE_LENGTH = pickle.load(file)
+descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, placeMedian, colnames, classEncoder  = pickle.load(file)
 
 #Predict text (e.g., 'Montmartre is truly beautiful')
 #http://127.0.0.1:5000/predictText?text=Montmartre%20is%20truly%20beautiful
@@ -57,7 +53,7 @@ def predictText():
 
         textSequences = textTokenizer.texts_to_sequences(testTexts)
         textSequences = np.asarray(textSequences)
-        textSequences = pad_sequences(textSequences, maxlen=MAX_TEXT_SEQUENCE_LENGTH)
+        textSequences = pad_sequences(textSequences)
 
         predict = textBranch.predict(textSequences)
 

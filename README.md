@@ -3,6 +3,42 @@ Geolocation prediction for a given Tweet, or a short text. The system trains a n
 
 	Philippe Thomas and Leonhard Hennig (2017), "Twitter Geolocation Prediction using Neural Networks." In Proceedings of GSCL
 
+# Performance
+
+## Old (published) model
+|Model   	|   Acc	| Median  	| Mean  	|  Acc 	| Median 	| Mean |
+|---	|---	|---	|---	|---	|---	|---	|
+|   Location	| 0.361  	| 205.6  	| 4,538.0 	| 0.445  	| 43.9  	| 3,831.7 	|
+|  Text 	    | 0.195 	| 2,190.6  	| 4,472.9	| 0.321  	| 263.8 	| 2,570.9	|
+|  Description 	| 0.087 	| 3,817.2 	| 6,060.2 	| 0.098 	| 3,296.9  	| 5,880.0 	|
+|  User-name 	| 0.057 	| 3,849.0 	| 5,930.1	| 0.059  	| 4,140.4  	| 6,107.6 	|
+|  Timezone     | 0.058     | 5,268.0   | 5,530.1   | 0.061     | 5,470.5   | 5,465.5   |
+|  User-lang 	| 0.061  	| 6,465.1  	| 7,310.2 	| 0.047  	| 8,903.7 	| 8,525.1 	|
+|  Links 	    | 0.032  	| 7,601.7  	| 6,980.5  	| 0.045  	| 6,687.4  	| 6,546.8  	|
+|  UTC 	        | 0.046  	| 7,698.1  	| 6,849.0  	| 0.051  	| 3,883.4  	| 6,422.6  	|
+|  Source 	    | 0.045  	| 8,005.0  	| 7,516.8  	| 0.045  	| 6,926.3  	| 6,923.5  	|
+|  Tweet-time 	| 0.028  	| 8,867.6  	| 8,464.9  	| 0.024  	| 11,720.6  | 10,363.2  |
+|  Full-scratch | 0.417  	|   59.0	| 1,616.4  	| 0.513  	| 17.8  	| 1,023.9  	|
+|  Full-fixed 	| **0.430**  	|   **47.6**	| **1,179.4**  	| **0.530**  	| **14.9**  	| **838.5**  	|
+|  Baseline 	| 0.028  	| 11,723.0  | 10,264.3  | 0.024  	| 11,771.5  | 10,584.4  |
+
+## New model (Version 2.0)
+|Model   	|   Acc	| Median  	| Mean  	|  Acc 	| Median 	| Mean |
+|---	|---	|---	|---	|---	|---	|---	|
+|   Location	| 0.364| 208.0| 4525.7| 0.447| 42.0| 3811.1 |
+|  Text 	    | 0.2| 1797.8| 4083.3 | 0.336| 199.2| 2291.7 |
+|  Description 	| 0.096| 3152.5| 5805.0 |0.119| 2794.7| 5480.7 |
+|  User-name 	| 0.059| 3838.7| 5934.8 |0.059| 3944.8| 6076.7 |
+|  Timezone     | 0.057| 5268.0| 5528.7 | 0.061| 5471.7| 5463.2|
+|  User-lang 	| 0.063| 6049.3| 7339.9 | 0.046| 9050.0| 8573.3 |
+|  Links 	    | 0.033| 7605.3| 6980.3 | 0.045| 6733.1| 6576.7 |
+|  UTC 	        | 0.047| 7709.5| 6850.0 | 0.051| 3888.6| 6423.1|
+|  Source 	    | 0.045| 7998.1| 7521.5 | 0.045| 6982.7| 6981.1 |
+|  Tweet-time 	| 0.028| 8398.1| 7668.8 | 0.024| 11720.6| 10241.8|
+|  Full-fixed 	| **0.433**| **47.0**| **1152.4**  |**0.533**| **13.8**| **769.7** |
+|  Baseline 	| 0.028  	| 11,723.0  | 10,264.3  | 0.024  	| 11,771.5  | 10,584.4  |
+
+
 # Usage
 
 ## Download 
@@ -31,7 +67,7 @@ python3 /root/code/EvaluateTweet.py
 python3 /root/code/EvaluateUser.py
 ```
 
-### New docker image (V2.1)
+### New docker image with REST-API (V2.1)
 We also provide a [docker image](https://drive.google.com/open?id=17aeTaCHcsW4vX6_RqD_-6NDQmlSG6uWk) of our code using functional API and a REST Service
 ```bash
 unlzma geolocationV2.tar.lzma
@@ -39,7 +75,7 @@ docker load --input geolocationV2.tar
 docker run -d -p   5000:5000 --network host  geoloc:latest
 ```
 
-Access the simple text model using the [URL](http://127.0.0.1:5000/predictText?text=Montmartre%20is%20truly%20beautiful) and returns
+Access the simple text model using the [URL](http://127.0.0.1:5000/predictText?text=Montmartre%20is%20truly%20beautiful) and it returns
 
 ```json
 {
@@ -49,35 +85,34 @@ Access the simple text model using the [URL](http://127.0.0.1:5000/predictText?t
             "city": "paris-a875-fr",
             "lat": 48.857779087136095,
             "lon": 2.3539118329464914,
-            "score": 0.43245163559913635
+            "score": 0.2016402930021286
+        },
+        {
+            "city": "city of london-enggla-gb",
+            "lat": 51.50090096289424,
+            "lon": -0.09162320754762229,
+            "score": 0.08580838143825531
         },
         {
             "city": "boulogne billancourt-a892-fr",
             "lat": 48.82956285864007,
             "lon": 2.2603947479966044,
-            "score": 0.045727577060461044
+            "score": 0.030901918187737465
         },
         {
-            "city": "saint denis-a893-fr",
-            "lat": 48.947253923722585,
-            "lon": 2.4314893304822607,
-            "score": 0.0368279293179512
+            "city": "manhattan-ny061-us",
+            "lat": 40.760731485273375,
+            "lon": -73.96936825522386,
+            "score": 0.018226830288767815
         },
         {
-            "city": "creteil-a894-fr",
-            "lat": 48.80814304627673,
-            "lon": 2.5156099666530327,
-            "score": 0.01906118169426918
-        },
-        {
-            "city": "argenteuil-a895-fr",
-            "lat": 48.97509961545753,
-            "lon": 2.1906891017164387,
-            "score": 0.01858099363744259
+            "city": "dublin-l33-ie",
+            "lat": 53.37821923430317,
+            "lon": -6.37129742197171,
+            "score": 0.01762479543685913
         }
     ]
-}
-```
+}```
 
 
 ## Example usage for short text:
@@ -115,8 +150,16 @@ for index in reversed(predict.argsort()[0][-5:]):
 ```
 
 ### The output is:
-	paris-a875-fr with score=0.275
-	city of london-enggla-gb with score=0.079
-	boulogne billancourt-a892-fr with score=0.032
-	saint denis-a893-fr with score=0.024
-	meaux-a877-fr with score=0.015
+	paris-a875-fr with score=0.202
+    city of london-enggla-gb with score=0.086
+    boulogne billancourt-a892-fr with score=0.031
+    manhattan-ny061-us with score=0.018
+    dublin-l33-ie with score=0.018
+
+# Possible improvements
+ - Character CNN
+ - Transformer models
+ - Use image data
+ - LSTM representation via Keras generators to save memory
+ - Incorporate user-graph for prediction (e.g. using neural structure learning)
+ - How's the performance for the full network when we only feed partial info? (E.g. only text, timezone, ...)
