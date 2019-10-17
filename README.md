@@ -44,12 +44,15 @@ Geolocation prediction for a given Tweet, or a short text. The system trains a n
 ## Download 
 Source code from this repository has been published here (https://github.com/Erechtheus/geolocation/releases). 
 - [Version 1.0](https://github.com/Erechtheus/geolocation/releases/tag/V1.0) refers to the original code, which has been presented in our GSCL paper. 
-- [Version 2.1](https://github.com/Erechtheus/geolocation/releases/tag/V2.1)  (recommended) uses keras functional API (instead of Keras sequential API). This code runs with Keras Version 2, whereas the original release worked with Keras Version 1. Also has some minor improvement regarding preprocessing and has a REST-API.
+- [Version 2.2](https://github.com/Erechtheus/geolocation/releases/tag/V2.2)  (**highly** recommended) uses keras functional API (instead of Keras sequential API). This code runs with Keras Version 2, whereas the original release worked with Keras Version 1. Also has some minor improvement regarding preprocessing and has a REST-API.
 
 ## Train and apply models
 To train models, training data (tweets and gold labels) needs to be retrieved. As Tweets can not be shared directly, we refer to the [WNUT'16 workshop page](http://noisy-text.github.io/2016/geo-shared-task.html) for further information.
 
-After retrieving the training files, the [preprocess](https://github.com/Erechtheus/geolocation/blob/master/Preprocess.py) script converts tweets into the desired representation to train a neural network. Models can be trained from scratch using the [trainindividual](https://github.com/Erechtheus/geolocation/blob/master/TrainIndividualModels.py) script. Pretrained models are available in HDF5 format [here](https://drive.google.com/open?id=0B9uTfq0OyHAsREphWG9OdHptREU). Additionally, we require some information on model and preprocessor (e.g., tokenizer) which is provided [here](https://drive.google.com/open?id=0B9uTfq0OyHAsZHRacHF3NDVObXc). The evaluation of models is implemented [here](https://github.com/Erechtheus/geolocation/blob/master/EvaluateTweet.py).
+After retrieving the training files, the [preprocess](https://github.com/Erechtheus/geolocation/blob/master/Preprocess.py) script converts tweets into the desired representation to train a neural network. Models can be trained from scratch using the [trainindividual](https://github.com/Erechtheus/geolocation/blob/master/TrainIndividualModels.py) script.
+Pretrained models are available in HDF5 format [here](https://drive.google.com/file/d/1SrlOnSh14yZ8Jwvcg0Atl0Tbr0dHLZ5N/view?usp=sharing).
+Additionally, we require some information on model and preprocessor (e.g., tokenizer) which is provided [here](https://drive.google.com/open?id=161_4GSCjZsLCC53Ij_eLEDVQmcvrprvl).
+The evaluation of models is implemented [here](https://github.com/Erechtheus/geolocation/blob/master/EvaluateTweet.py).
 
 ## Docker image
 
@@ -67,8 +70,8 @@ python3 /root/code/EvaluateTweet.py
 python3 /root/code/EvaluateUser.py
 ```
 
-### New docker image with REST-API (V2.1)
-We also provide a [docker image](https://drive.google.com/open?id=17aeTaCHcsW4vX6_RqD_-6NDQmlSG6uWk) of our code using functional API and a REST Service
+### New docker image with REST-API (V2.2); recomended
+We also provide a [docker image](https://drive.google.com/file/d/1mOJ7Hl12GSyG8LcV8cOcs-cpWwWu2Kq2/view?usp=sharing) of our code using functional API and a REST Service
 ```bash
 unlzma geolocationV2.tar.lzma
 docker load --input geolocationV2.tar
