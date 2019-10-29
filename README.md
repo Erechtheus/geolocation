@@ -50,9 +50,25 @@ Source code from this repository has been published here (https://github.com/Ere
 To train models, training data (tweets and gold labels) needs to be retrieved. As Tweets can not be shared directly, we refer to the [WNUT'16 workshop page](http://noisy-text.github.io/2016/geo-shared-task.html) for further information.
 
 After retrieving the training files, the [preprocess](https://github.com/Erechtheus/geolocation/blob/master/Preprocess.py) script converts tweets into the desired representation to train a neural network. Models can be trained from scratch using the [trainindividual](https://github.com/Erechtheus/geolocation/blob/master/TrainIndividualModels.py) script.
-Pretrained models are available in HDF5 format [here](https://drive.google.com/file/d/1SrlOnSh14yZ8Jwvcg0Atl0Tbr0dHLZ5N/view?usp=sharing).
-Additionally, we require some information on model and preprocessor (e.g., tokenizer) which is provided [here](https://drive.google.com/open?id=161_4GSCjZsLCC53Ij_eLEDVQmcvrprvl).
+Pretrained models and preprocessors (e.g., used tokenizer)  are available [here](https://drive.google.com/file/d/11S76MWFT14vcraJ2V7skGIaKLpyQpks8/view?usp=sharing).
 The evaluation of models is implemented [here](https://github.com/Erechtheus/geolocation/blob/master/EvaluateTweet.py).
+
+##  Local installation
+This section briefly explains the steps to download the source code, installs python dependencies in Anaconda, downloads the models and processors and performs text classification for one text example.
+```bash
+git clone https://github.com/Erechtheus/geolocation.git
+cd geolocation/
+conda create --name geoloc  --file requirements.txt
+conda activate geoloc
+
+#Download model and preprocessor https://drive.google.com/file/d/11S76MWFT14vcraJ2V7skGIaKLpyQpks8/view?usp=sharing
+
+tar xfva modelsV2.tar.lzma
+tar xfva processorsV2.tar.lzma
+
+python predictText.py
+```
+
 
 ## Docker image
 
