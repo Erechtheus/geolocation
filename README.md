@@ -22,7 +22,7 @@ Geolocation prediction for a given Tweet, or a short text. The system trains a n
 |  Full-fixed 	| **0.430**  	|   **47.6**	| **1,179.4**  	| **0.530**  	| **14.9**  	| **838.5**  	|
 |  Baseline 	| 0.028  	| 11,723.0  | 10,264.3  | 0.024  	| 11,771.5  | 10,584.4  |
 
-## New model (Version 2.0)
+## New model (Version 2.2)
 |Model   	|   Acc	| Median  	| Mean  	|  Acc 	| Median 	| Mean |
 |---	|---	|---	|---	|---	|---	|---	|
 |   Location	| 0.364| 208.0| 4525.7| 0.447| 42.0| 3811.1 |
