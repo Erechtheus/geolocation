@@ -53,23 +53,6 @@ After retrieving the training files, the [preprocess](https://github.com/Erechth
 Pretrained models and preprocessors (e.g., used tokenizer)  are available [here](https://drive.google.com/file/d/11S76MWFT14vcraJ2V7skGIaKLpyQpks8/view?usp=sharing).
 The evaluation of models is implemented [here](https://github.com/Erechtheus/geolocation/blob/master/EvaluateTweet.py).
 
-##  Local installation
-This section briefly explains the steps to download the source code, installs python dependencies in Anaconda, downloads the models and processors and performs text classification for one text example.
-```bash
-git clone https://github.com/Erechtheus/geolocation.git
-cd geolocation/
-conda create --name geoloc  --file requirements.txt
-conda activate geoloc
-
-#Download model and preprocessor https://drive.google.com/file/d/11S76MWFT14vcraJ2V7skGIaKLpyQpks8/view?usp=sharing
-
-tar xfva modelsV2.tar.lzma
-tar xfva processorsV2.tar.lzma
-
-python predictText.py
-```
-
-
 ## Docker image
 
 ### Old deprecated docker image (V1.0)
@@ -134,7 +117,24 @@ Access the simple text model using the [URL](http://127.0.0.1:5000/predictText?t
 ```
 
 
-## Example usage for short text:
+##  Local installation
+This section briefly explains the steps to download the source code, installs python dependencies in Anaconda, downloads the models and processors and performs text classification for one text example.
+```bash
+git clone https://github.com/Erechtheus/geolocation.git
+cd geolocation/
+conda create --name geoloc  --file requirements.txt
+conda activate geoloc
+
+#Download model and preprocessor https://drive.google.com/file/d/11S76MWFT14vcraJ2V7skGIaKLpyQpks8/view?usp=sharing
+
+tar xfva modelsV2.tar.lzma
+tar xfva processorsV2.tar.lzma
+
+python predictText.py
+```
+
+
+## Example usage for short text in python code:
 The code below briefly describes how to use our neural network, trained on text only. For other examples (e.g., using Twitter text and metadata), we refer to the examples in the two evaluation scripts
 
 ```python
