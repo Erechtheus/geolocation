@@ -87,11 +87,10 @@ python3 /root/code/EvaluateUser.py
 ```
 
 ### New docker image with REST-API (V2.2); recomended
-We also provide a [docker image](https://drive.google.com/file/d/1mOJ7Hl12GSyG8LcV8cOcs-cpWwWu2Kq2/view?usp=sharing) of our code using functional API and a REST Service
+We also provide a docker image at [docker hub](https://hub.docker.com/r/erechtheus79/geolocation) of our code using functional API and a REST Service
 ```bash
-unlzma geolocationV2.tar.lzma
-docker load --input geolocationV2.tar
-docker run -d -p   5000:5000 --network host  geoloc:latest
+docker pull erechtheus79/geolocation
+docker run -d -p   5000:5000 --network host  erechtheus79/geolocation:latest
 ```
 
 Access the simple text model using the [URL](http://127.0.0.1:5000/predictText?text=Montmartre%20is%20truly%20beautiful) and it returns
