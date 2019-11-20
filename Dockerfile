@@ -30,6 +30,7 @@ CMD ["python", "./webservice.py"]
 ########################### Other commands ###########################
 ##list images
 #docker images -a
+#docker image rm a08c6226131a
 
 ##ls for docker
 #docker container ls
@@ -39,6 +40,9 @@ CMD ["python", "./webservice.py"]
 
 
 
-
+########################### Push image to docker hub ###########################
+#docker build -t erechtheus79/geolocation .
+#docker login 
+#docker push erechtheus79/geolocation:latest
 
 
