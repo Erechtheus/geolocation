@@ -130,7 +130,8 @@ Access the simple text model using the [URL](http://127.0.0.1:5000/predictText?t
             "score": 0.01762479543685913
         }
     ]
-}```
+}
+```
 
 
 ## Example usage for short text:
