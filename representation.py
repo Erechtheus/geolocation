@@ -229,6 +229,9 @@ def parseJsonLine( line ):
     tweet = json.loads(line)
     #normalized = unicodedata.normalize('NFKD', tweet['text']).encode('ASCII', 'ignore').decode('UTF-8') 
     normalized = tweet['text']
+    normalized = normalized.replace("&amp;","&")
+    normalized = normalized.replace("&lt;", "<")
+    normalized = normalized.replace("&gt;", ">")
     tweetTime = datetime.strptime(tweet['created_at'], '%a %b %d %H:%M:%S +0000 %Y') #
     instance = Instance(text=normalized, timezone=tweet['user']['time_zone'],  location=tweet['user']['location'], name=tweet['user']['name'],
                         utcOffset = tweet['user']['utc_offset'], description = tweet['user']['description'], userLanguage = tweet['user']['lang'], createdAt = tweetTime)
