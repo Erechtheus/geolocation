@@ -158,6 +158,7 @@ with open(modelPath +"finalmodel.yaml", "w") as yaml_file:
 final_model.save_weights(modelPath +'finalmodelWeight.h5')
 
 #########################
+"""
 for layer in final_model.layers:
     layer.trainable = True
     final_model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
@@ -176,3 +177,4 @@ model_yaml = final_model.to_yaml()
 with open(modelPath +"finalmodel2.yaml", "w") as yaml_file:
     yaml_file.write(model_yaml)
 final_model.save_weights(modelPath +'finalmodelWeight2.h5')
+"""
