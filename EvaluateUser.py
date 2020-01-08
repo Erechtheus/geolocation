@@ -42,12 +42,13 @@ final_model = model_from_yaml(loaded_model_yaml)
 final_model.load_weights(modelPath+"finalmodelWeight.h5")
 
 #Retrained model
+"""
 yaml_file = open(modelPath +'finalmodel2.yaml', 'r')
 loaded_model_yaml = yaml_file.read()
 yaml_file.close()
 final_modelTrainable = model_from_yaml(loaded_model_yaml)
 final_modelTrainable.load_weights(modelPath+"finalmodelWeight2.h5")
-
+"""
 
 ##Evaluate model, this the the most likely place
 def evalMax(predictions, type='USER', predictToFile='predictionsUserTmp.json'):
@@ -255,6 +256,8 @@ evalMax(predict)
 #/home/philippe/PycharmProjects/deepLearning/predictionsUser.json& USER& 0.53& 14.9& 838.5
 
 #11.) Merged model
+"""
 print("Full Model retrained")
 predict = final_modelTrainable.predict([descriptionSequences, testDomain, testTld, locationSequences, testSource, textSequences, userSequences, tzSequences, testUtc, testUserLang, (np.column_stack((testSinTime, testCosTime)))])
 evalMax(predict)
+"""

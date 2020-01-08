@@ -42,12 +42,13 @@ final_model.load_weights(modelPath +"finalmodelWeight.h5")
 
 
 #Retrained model
+"""
 yaml_file = open(modelPath +'finalmodel2.yaml', 'r')
 loaded_model_yaml = yaml_file.read()
 yaml_file.close()
 final_modelTrainable = model_from_yaml(loaded_model_yaml)
 final_modelTrainable.load_weights(modelPath+"finalmodelWeight2.h5")
-
+"""
 
 ##Evaluate model
 def eval(predictions, type='TWEET', predictToFile='predictionsTmp.json'):
@@ -260,7 +261,9 @@ eval(predict)
 
 
 #12.) Merged model with original weights; without 2 parts which are not pretrained; maybe include?
+""""
 print("Merged with full retraining=")
 predict = final_modelTrainable.predict([descriptionSequences, testDomain, testTld, locationSequences, testSource, textSequences, userSequences, tzSequences, testUtc, testUserLang, np.column_stack((testSinTime, testCosTime)) ])
 eval(predict)
+"""
 #/home/philippe/PycharmProjects/deepLearning/predictions.json& TWEET& 0.43& 47.6& 1179.4
