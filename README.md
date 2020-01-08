@@ -157,3 +157,4 @@ The evaluation of models is implemented [here](https://github.com/Erechtheus/geo
  
 # Tested improvements
  - FastText as embedding method -> Performance for text-model is below our current methods. But, we did not use a fast-text model explicitly learned on social-media data
+ - LSTM using recurrent dropout -> no improvement can be oberved
