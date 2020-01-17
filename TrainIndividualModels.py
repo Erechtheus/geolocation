@@ -390,5 +390,5 @@ categorialModelHistory = categorialModel.fit(trainData, classes,
                                               epochs=nb_epoch, batch_size=batch_size,
                                               verbose=verbosity, validation_split=validation_split,callbacks=callbacks
                                               )
-print("categorialModel finished after " +str(datetime.timedelta(time.time() - start)))
+print("categorialModel finished after " +str(datetime.timedelta(seconds=time.time() - start)))
 categorialModel.save(modelPath + 'categorialModel.h5')
