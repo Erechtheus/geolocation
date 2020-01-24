@@ -65,31 +65,31 @@ Access the simple text model using the [URL](http://127.0.0.1:5000/predictText?t
             "city": "paris-a875-fr",
             "lat": 48.857779087136095,
             "lon": 2.3539118329464914,
-            "score": 0.2016402930021286
+            "score": 0.18563927710056305
         },
         {
             "city": "city of london-enggla-gb",
             "lat": 51.50090096289424,
             "lon": -0.09162320754762229,
-            "score": 0.08580838143825531
+            "score": 0.04953022673726082
         },
         {
             "city": "boulogne billancourt-a892-fr",
             "lat": 48.82956285864007,
             "lon": 2.2603947479966044,
-            "score": 0.030901918187737465
+            "score": 0.04159574210643768
         },
         {
-            "city": "manhattan-ny061-us",
-            "lat": 40.760731485273375,
-            "lon": -73.96936825522386,
-            "score": 0.018226830288767815
+            "city": "saint denis-a893-fr",
+            "lat": 48.947253923722585,
+            "lon": 2.4314893304822607,
+            "score": 0.02842172235250473
         },
         {
-            "city": "dublin-l33-ie",
-            "lat": 53.37821923430317,
-            "lon": -6.37129742197171,
-            "score": 0.01762479543685913
+            "city": "argenteuil-a895-fr",
+            "lat": 48.97509961545753,
+            "lon": 2.1906891017164387,
+            "score": 0.021229125559329987
         }
     ]
 }
@@ -106,14 +106,42 @@ from keras.preprocessing.sequence import pad_sequences
 import numpy as np
 
 #Load Model
-textBranch = load_model('data/w-nut-latest/models/textBranchNorm.h5')
+textBranch = load_model('data/models/textBranchNorm.h5')
+from keras.models import load_model
+import pickle
+from keras.preprocessing.sequence import pad_sequences
+import numpy as np
+
+#Load Model
+textBranch = load_model('data/models/textBranchNorm.h5')
 
 #Load tokenizers, and mapping
-file = open("data/w-nut-latest/binaries/processors.obj",'rb')
+file = open("data/binaries/processors.obj",'rb')
 descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, timeEncoder, placeMedian, classes, colnames = pickle.load(file)
 
 #Load properties from model
-file = open("data/w-nut-latest/binaries/vars.obj",'rb')
+file = open("data/binaries/vars.obj",'rb')
+MAX_DESC_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX_NAME_SEQUENCE_LENGTH, MAX_TZ_SEQUENCE_LENGTH = pickle.load(file)
+#Predict text (e.g., 'Montmartre is truly beautiful')
+testTexts=[];
+testTexts.append("Montmartre is truly beautiful")
+
+textSequences = textTokenizer.texts_to_sequences(testTexts)
+textSequences = np.asarray(textSequences)
+textSequences = pad_sequences(textSequences, maxlen=MAX_TEXT_SEQUENCE_LENGTH)
+
+predict = textBranch.predict(textSequences)
+
+#Print the top 5
+for index in reversed(predict.argsort()[0][-5:]):
+    print("%s with score=%.3f" % (colnames[index], float(predict[0][index])) )
+
+#Load tokenizers, and mapping
+file = open("data/binaries/processors.obj",'rb')
+descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, timeEncoder, placeMedian, classes, colnames = pickle.load(file)
+
+#Load properties from model
+file = open("data/binaries/vars.obj",'rb')
 MAX_DESC_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX_NAME_SEQUENCE_LENGTH, MAX_TZ_SEQUENCE_LENGTH = pickle.load(file)
 #Predict text (e.g., 'Montmartre is truly beautiful')
 testTexts=[];
@@ -131,11 +159,11 @@ for index in reversed(predict.argsort()[0][-5:]):
 ```
 
 #### The output is:
-	paris-a875-fr with score=0.202
-    city of london-enggla-gb with score=0.086
-    boulogne billancourt-a892-fr with score=0.031
-    manhattan-ny061-us with score=0.018
-    dublin-l33-ie with score=0.018
+    paris-a875-fr with score=0.186
+    city of london-enggla-gb with score=0.050
+    boulogne billancourt-a892-fr with score=0.042
+    saint denis-a893-fr with score=0.028
+    argenteuil-a895-fr with score=0.021
 
 ## Train and apply models
 To train models, training data (tweets and gold labels) needs to be retrieved. As Tweets can not be shared directly, we refer to the [WNUT'16 workshop page](http://noisy-text.github.io/2016/geo-shared-task.html) for further information.
