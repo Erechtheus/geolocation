@@ -1,23 +1,22 @@
-from keras.engine.saving import model_from_yaml
 from keras.models import load_model
 import pickle
 from keras.preprocessing.sequence import pad_sequences
 import numpy as np
 import tensorflow as tf
+import os
 
 from flask import Flask
 from flask import request
 from flask import json
 from flask import Response
 
-from representation import parseJsonLine, extractPreprocessUrl
+#os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
+#os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 app = Flask(__name__)
 
-
 binaryPath= 'data/binaries/'    #Place where the serialized training data is
 modelPath= 'data/models/'       #Place to store the models
-
 
 #Load text Model
 textBranch = load_model(modelPath +'/textBranchNorm.h5')
@@ -31,7 +30,6 @@ final_modelTrainable = model_from_yaml(loaded_model_yaml)
 final_modelTrainable.load_weights(modelPath+"finalmodelWeight2.h5")
 """
 graph = tf.get_default_graph()
-
 
 #Load preprocessed data...
 file = open(binaryPath +"processors.obj",'rb')
