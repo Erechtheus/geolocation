@@ -2,6 +2,10 @@ from keras.models import load_model
 import pickle
 from keras.preprocessing.sequence import pad_sequences
 import numpy as np
+import os
+
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 binaryPath= 'data/binaries/'    #Place where the serialized training data is
 modelPath= 'data/models/'       #Place to store the models
