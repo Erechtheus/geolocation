@@ -26,7 +26,7 @@ This section briefly provides some information about the performance of our meth
 
 ## Download 
 Source code from this repository has been published here (https://github.com/Erechtheus/geolocation/releases). 
-- [Version 2.2](https://github.com/Erechtheus/geolocation/releases/tag/V2.2)   uses keras functional API (instead of Keras sequential API). This code runs with Keras Version 2, whereas the original [release](https://github.com/Erechtheus/geolocation/releases/tag/V1.0) worked with Keras Version 1. Also has some minor improvement regarding preprocessing and has a REST-API.
+- [Version 2.3](https://github.com/Erechtheus/geolocation/releases/tag/V2.3)   uses keras functional API (instead of Keras sequential API). This code runs with Keras Version 2, whereas the original [release](https://github.com/Erechtheus/geolocation/releases/tag/V1.0) worked with Keras Version 1. Also has some minor improvement regarding preprocessing and has a REST-API.
 
 
 ##  Local installation (python)
@@ -48,7 +48,7 @@ python predictText.py
 
 ## Local installation (docker image)
 
-We provide a [docker image](https://drive.google.com/file/d/1mOJ7Hl12GSyG8LcV8cOcs-cpWwWu2Kq2/view?usp=sharing) of our code using functional API and a REST Service
+We provide a [docker image](https://drive.google.com/file/d/19AA3M6dZHK8gogC8qxmt2vVDXrvs98MR/view?usp=sharing) of our code using functional API and a REST Service
 ```bash
 unlzma geolocationV2.tar.lzma
 docker load --input geolocationV2.tar
@@ -144,7 +144,7 @@ descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncode
 file = open("data/binaries/vars.obj",'rb')
 MAX_DESC_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX_NAME_SEQUENCE_LENGTH, MAX_TZ_SEQUENCE_LENGTH = pickle.load(file)
 #Predict text (e.g., 'Montmartre is truly beautiful')
-testTexts=[];
+testTexts=[]
 testTexts.append("Montmartre is truly beautiful")
 
 textSequences = textTokenizer.texts_to_sequences(testTexts)
@@ -169,7 +169,7 @@ for index in reversed(predict.argsort()[0][-5:]):
 To train models, training data (tweets and gold labels) needs to be retrieved. As Tweets can not be shared directly, we refer to the [WNUT'16 workshop page](http://noisy-text.github.io/2016/geo-shared-task.html) for further information.
 
 After retrieving the training files, the [preprocess](https://github.com/Erechtheus/geolocation/blob/master/Preprocess.py) script converts tweets into the desired representation to train a neural network. Models can be trained from scratch using the [trainindividual](https://github.com/Erechtheus/geolocation/blob/master/TrainIndividualModels.py) script.
-Pretrained models and preprocessors (e.g., used tokenizer)  are available [here](https://drive.google.com/file/d/11S76MWFT14vcraJ2V7skGIaKLpyQpks8/view?usp=sharing).
+Pretrained models and preprocessors (e.g., used tokenizer)  are available [here](https://drive.google.com/open?id=1BA_Rj5FJ30nTzvfJvnhgx3k-bzC6Sn9D).
 The evaluation of models is implemented [here](https://github.com/Erechtheus/geolocation/blob/master/EvaluateTweet.py).
 
 
