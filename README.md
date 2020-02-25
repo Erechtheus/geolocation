@@ -188,8 +188,8 @@ The evaluation of models is implemented [here](https://github.com/Erechtheus/geo
  - Incorporate user-graph for prediction (e.g. using neural structure learning)
  - Character CNN (memory consumption pretty high in my implementation, needs generators)
  - Use image data
-
+ - Train a worldwide country-model? Clustering?
  
 # Tested improvements
  - FastText as embedding method -> Performance for text-model is below our current methods. But, we did not use a fast-text model explicitly learned on social-media data
- - LSTM using recurrent dropout -> no improvement can be oberved
+ - LSTM using recurrent dropout -> no improvement can be oberved (TrainIndividualModelsCNN.py)
