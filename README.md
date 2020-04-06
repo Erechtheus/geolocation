@@ -52,14 +52,14 @@ We provide a [docker image](https://drive.google.com/file/d/19AA3M6dZHK8gogC8qxm
 ```bash
 unlzma geolocationV2.tar.lzma
 docker load --input geolocationV2.tar
-docker run -d -p   5000:5000 --network host  geoloc:latest
+docker run -d -p   5000:5000 --name geolocation --network host  geoloc:latest
 ```
 
 Alternatively, you can download the model from [docker hub](https://hub.docker.com/r/erechtheus79/geolocation).
 
 ```bash
 docker pull erechtheus79/geolocation
-docker run -d -p   5000:5000 --network host  erechtheus79/geolocation
+docker run -d -p   5000:8080 --name geolocation --network host  erechtheus79/geolocation
 ```
 
 Access the simple text model using the [URL](http://127.0.0.1:5000/predictText?text=Montmartre%20is%20truly%20beautiful) and it returns
