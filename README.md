@@ -104,7 +104,8 @@ Access the simple text model using the [URL](http://127.0.0.1:5000/predictText?t
 ## Example usage to predict location of a text snippet:
 The code below briefly describes how to use our neural network, trained on text only. For other examples (e.g., using Twitter text and metadata), we refer to the examples in the two evaluation scripts
 
-```pythonfrom keras.models import load_model
+```python
+from keras.models import load_model
 import pickle
 from keras.preprocessing.sequence import pad_sequences
 import numpy as np
