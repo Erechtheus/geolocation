@@ -37,8 +37,7 @@ cd geolocation/
 conda create --name geoloc  --file requirements.txt
 conda activate geoloc
 
-#Download model and preprocessor https://drive.google.com/file/d/11S76MWFT14vcraJ2V7skGIaKLpyQpks8/view?usp=sharing
-
+#Download model and preprocessor https://drive.google.com/open?id=1BA_Rj5FJ30nTzvfJvnhgx3k-bzC6Sn9D
 tar xfva relevantData.tar.lzma
 
 python predictText.py
