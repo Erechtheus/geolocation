@@ -104,36 +104,26 @@ Access the simple text model using the [URL](http://127.0.0.1:5000/predictText?t
 ## Example usage to predict location of a text snippet:
 The code below briefly describes how to use our neural network, trained on text only. For other examples (e.g., using Twitter text and metadata), we refer to the examples in the two evaluation scripts
 
-```python
-from keras.models import load_model
+```pythonfrom keras.models import load_model
 import pickle
 from keras.preprocessing.sequence import pad_sequences
 import numpy as np
 
-#Load Model
-textBranch = load_model('data/models/textBranchNorm.h5')
-from keras.models import load_model
-import pickle
-from keras.preprocessing.sequence import pad_sequences
-import numpy as np
 
 #Load Model
 textBranch = load_model('data/models/textBranchNorm.h5')
 
 #Load tokenizers, and mapping
 file = open("data/binaries/processors.obj",'rb')
-descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, timeEncoder, placeMedian, classes, colnames = pickle.load(file)
+descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, placeMedian, colnames, classEncoder  = pickle.load(file)
 
-#Load properties from model
-file = open("data/binaries/vars.obj",'rb')
-MAX_DESC_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX_NAME_SEQUENCE_LENGTH, MAX_TZ_SEQUENCE_LENGTH = pickle.load(file)
 #Predict text (e.g., 'Montmartre is truly beautiful')
 testTexts=[];
 testTexts.append("Montmartre is truly beautiful")
 
 textSequences = textTokenizer.texts_to_sequences(testTexts)
 textSequences = np.asarray(textSequences)
-textSequences = pad_sequences(textSequences, maxlen=MAX_TEXT_SEQUENCE_LENGTH)
+textSequences = pad_sequences(textSequences)
 
 predict = textBranch.predict(textSequences)
 
@@ -141,34 +131,14 @@ predict = textBranch.predict(textSequences)
 for index in reversed(predict.argsort()[0][-5:]):
     print("%s with score=%.3f" % (colnames[index], float(predict[0][index])) )
 
-#Load tokenizers, and mapping
-file = open("data/binaries/processors.obj",'rb')
-descriptionTokenizer, domainEncoder, tldEncoder, locationTokenizer, sourceEncoder, textTokenizer, nameTokenizer, timeZoneTokenizer, utcEncoder, langEncoder, timeEncoder, placeMedian, classes, colnames = pickle.load(file)
-
-#Load properties from model
-file = open("data/binaries/vars.obj",'rb')
-MAX_DESC_SEQUENCE_LENGTH, MAX_LOC_SEQUENCE_LENGTH, MAX_TEXT_SEQUENCE_LENGTH, MAX_NAME_SEQUENCE_LENGTH, MAX_TZ_SEQUENCE_LENGTH = pickle.load(file)
-#Predict text (e.g., 'Montmartre is truly beautiful')
-testTexts=[]
-testTexts.append("Montmartre is truly beautiful")
-
-textSequences = textTokenizer.texts_to_sequences(testTexts)
-textSequences = np.asarray(textSequences)
-textSequences = pad_sequences(textSequences, maxlen=MAX_TEXT_SEQUENCE_LENGTH)
-
-predict = textBranch.predict(textSequences)
-
-#Print the top 5
-for index in reversed(predict.argsort()[0][-5:]):
-    print("%s with score=%.3f" % (colnames[index], float(predict[0][index])) )
 ```
 
-#### The output is:
-    paris-a875-fr with score=0.186
-    city of london-enggla-gb with score=0.050
-    boulogne billancourt-a892-fr with score=0.042
-    saint denis-a893-fr with score=0.028
-    argenteuil-a895-fr with score=0.021
+#### The output is (scores might vary between different model versions):
+    paris-a875-fr with score=0.413
+    boulogne billancourt-a892-fr with score=0.070
+    saint denis-a893-fr with score=0.058
+    creteil-a894-fr with score=0.029
+    argenteuil-a895-fr with score=0.026
 
 ## Train and apply models
 To train models, training data (tweets and gold labels) needs to be retrieved. As Tweets can not be shared directly, we refer to the [WNUT'16 workshop page](http://noisy-text.github.io/2016/geo-shared-task.html) for further information.
