@@ -39,8 +39,7 @@ conda activate geoloc
 
 #Download model and preprocessor https://drive.google.com/file/d/11S76MWFT14vcraJ2V7skGIaKLpyQpks8/view?usp=sharing
 
-tar xfva modelsV2.tar.lzma
-tar xfva processorsV2.tar.lzma
+tar xfva relevantData.tar.lzma
 
 python predictText.py
 ```
@@ -50,8 +49,8 @@ python predictText.py
 
 We provide a [docker image](https://drive.google.com/file/d/19AA3M6dZHK8gogC8qxmt2vVDXrvs98MR/view?usp=sharing) of our code using functional API and a REST Service
 ```bash
-unlzma geolocationV2.tar.lzma
-docker load --input geolocationV2.tar
+unlzma geolocationV2.3.tar.lzma
+docker load --input geolocationV2.3.tar
 docker run -d -p   5000:5000 --name geolocation --network host  geoloc:latest
 ```
 
