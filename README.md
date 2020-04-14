@@ -31,7 +31,7 @@ Source code from this repository has been published here (https://github.com/Ere
 
 ##  Local installation (python)
 This section briefly explains the steps to download the source code, installs python dependencies in Anaconda, downloads the models and processors and performs text classification for one text example.
-Download model and preprocessor [relevantData.tar.lzma](https://drive.google.com/open?id=1BA_Rj5FJ30nTzvfJvnhgx3k-bzC6Sn9D).
+Download model and preprocessor [relevantData.tar.lzma](https://drive.google.com/open?id=12L8BNQ9zTi6MehoQEILGKFy4pw0mVZGa).
 
 ```bash
 git clone https://github.com/Erechtheus/geolocation.git
