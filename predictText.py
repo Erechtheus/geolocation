@@ -7,8 +7,8 @@ import os
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
-binaryPath= 'data/binaries/'    #Place where the serialized training data is
-modelPath= 'data/models/'       #Place to store the models
+binaryPath= 'binaries/'    #Place where the serialized training data is
+modelPath= 'models/'       #Place to store the models
 
 #Load Model
 textBranch = load_model(modelPath +'/textBranchNorm.h5')
