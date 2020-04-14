@@ -27,6 +27,11 @@ CMD ["python", "./webservice.py"]
 ##Export docker container
 #docker save geoloc > geolocV2.tar
 
+#####################################################
+#Export data (relevantData.tar.lzma ) for local installation
+#XZ_OPT=-9 tar cfva relevantData.tar.lzma data/binaries/processors.obj data/models/
+
+
 ########################### Other commands ###########################
 ##list images
 #docker images -a
