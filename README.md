@@ -31,13 +31,14 @@ Source code from this repository has been published here (https://github.com/Ere
 
 ##  Local installation (python)
 This section briefly explains the steps to download the source code, installs python dependencies in Anaconda, downloads the models and processors and performs text classification for one text example.
+Download model and preprocessor [relevantData.tar.lzma](https://drive.google.com/open?id=1BA_Rj5FJ30nTzvfJvnhgx3k-bzC6Sn9D).
+
 ```bash
 git clone https://github.com/Erechtheus/geolocation.git
 cd geolocation/
 conda create --name geoloc  --file requirements.txt
 conda activate geoloc
 
-#Download model and preprocessor https://drive.google.com/open?id=1BA_Rj5FJ30nTzvfJvnhgx3k-bzC6Sn9D
 tar xfva relevantData.tar.lzma
 
 python predictText.py
