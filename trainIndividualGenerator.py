@@ -1,5 +1,4 @@
-#Load stuff:
-#import os
+#This is basically the same as TrainIndividualModels but uses a generator in order to allow for a lower memory footprint
 #os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
 #os.environ["CUDA_VISIBLE_DEVICES"] = ""
 

@@ -4,6 +4,7 @@ from keras.preprocessing.sequence import pad_sequences
 import numpy as np
 import tensorflow as tf
 import os
+import json
 
 from flask import Flask
 from flask import request
@@ -15,8 +16,18 @@ from flask import Response
 
 app = Flask(__name__)
 
-binaryPath= 'data/binaries/'    #Place where the serialized training data is
-modelPath= 'data/models/'       #Place to store the models
+#Load configuration from file
+if os.path.isfile('config.json'):
+    print("Loading configutation from configuration file {config.json}")
+    with open('config.json') as json_file:
+        config = json.load(json_file)
+    binaryPath = config['binaryPath']
+    modelPath = config['modelPath']
+
+else:
+    print("Configuration file {config.json} not found")
+    binaryPath = 'data/binaries/'  # Place where the serialized training data is
+    modelPath = 'data/models/'  # Place to store the models
 
 #Load text Model
 textBranch = load_model(modelPath +'/textBranchNorm.h5')

@@ -1,3 +1,5 @@
+# Trains single models for the available information-resources (e.g., twitter-text, user-name, UTC-time zone, language, ...)
+#Models are saved in folder modelPath
 #Load stuff:
 from sklearn.utils import shuffle
 import os
@@ -15,10 +17,20 @@ import math
 import datetime
 from keras import Input
 from keras import Model
+import json
 
+#Load configuration from file
+if os.path.isfile('config.json'):
+    print("Loading configutation from configuration file {config.json}")
+    with open('config.json') as json_file:
+        config = json.load(json_file)
+    binaryPath = config['binaryPath']
+    modelPath = config['modelPath']
 
-binaryPath= 'data/binaries/'    #Place where the serialized training data is
-modelPath= 'data/models/'       #Place to store the models
+else:
+    print("Configuration file {config.json} not found")
+    binaryPath = 'data/binaries/'  # Place where the serialized training data is
+    modelPath = 'data/models/'  # Place to store the models
 
 #Load preprocessed data...
 file = open(binaryPath +"processors.obj",'rb')

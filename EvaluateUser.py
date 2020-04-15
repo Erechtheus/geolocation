@@ -13,12 +13,24 @@ from geoEval import evaluate_submission
 from keras.models import model_from_yaml
 
 #############################
-binaryPath= 'data/binaries/'    #Place where the serialized training data is
-modelPath= 'data/models/'       #Place to store the models
+#Load configuration from file
+if os.path.isfile('config.json'):
+    print("Loading configutation from configuration file {config.json}")
+    with open('config.json') as json_file:
+        config = json.load(json_file)
+    binaryPath = config['binaryPath']
+    modelPath = config['modelPath']
 
-testFile="data/test/data/test.user.json"
-goldFile = 'data/test//test_labels/oracle.user.json'
+    testFile = config['testFileUser']
+    goldFile = config['goldFileUser']
 
+else:
+    print("Configuration file {config.json} not found")
+    binaryPath = 'data/binaries/'  # Place where the serialized training data is
+    modelPath = 'data/models/'  # Place to store the models
+
+    testFile = "data/test/data/test.user.json"
+    goldFile = 'data/test/test_labels/oracle.user.json'
 
 # Load the eight individual models
 descriptionBranch = load_model(modelPath +'descriptionBranchNorm.h5')

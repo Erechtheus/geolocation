@@ -6,12 +6,25 @@ import json
 import numpy as np
 
 from representation import parseJsonLine, Place
+import os
 
-trainingFile="data/train/training.twitter.json.gz" #File with  all ~9 Million training tweets
-placesFile='data/train/training.json.gz'           #Place annotation provided by task organisers
+#Load configuration from file
+if os.path.isfile('config.json'):
+    print("Loading configutation from configuration file {config.json}")
+    with open('config.json') as json_file:
+        config = json.load(json_file)
+    trainingFile = config['trainingFile']
+    placesFile = config['placesFile']
 
-testTweet="data/test/test.tweet.json"              # WNUT test file for tweets
-testUser= "data/test/test.user.json"               # WNUT test file for User
+    testTweet = config['testFileTweet']
+    testUser = config['testFileUser']
+else:
+    print("Configuration file {config.json} not found")
+    trainingFile = "data/train/training.twitter.json.gz"  # File with  all ~9 Million training tweets
+    placesFile = 'data/train/training.json.gz'  # Place annotation provided by task organisers
+
+    testTweet = "data/test/test.tweet.json"  # WNUT test file for tweets
+    testUser = "data/test/test.user.json"  # WNUT test file for User
 
 #Parse Twitter-JSON
 tweetToTextMapping= {} # Map<Twitter-ID; tweet>

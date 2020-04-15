@@ -14,11 +14,24 @@ from keras.models import model_from_yaml
 
 #############################
 # Load the eight individual models
-binaryPath= 'data/binaries/'    #Place where the serialized training data is
-modelPath= 'data/models/'       #Place to store the models
+#Load configuration from file
+if os.path.isfile('config.json'):
+    print("Loading configutation from configuration file {config.json}")
+    with open('config.json') as json_file:
+        config = json.load(json_file)
+    binaryPath = config['binaryPath']
+    modelPath = config['modelPath']
 
-testFile="data/test/data/test.tweet.json"
-goldFile='data/test/test_labels/oracle.tweet.json'
+    testFile = config['testFileTweet']
+    goldFile = config['goldFileTweet']
+
+else:
+    print("Configuration file {config.json} not found")
+    binaryPath = 'data/binaries/'  # Place where the serialized training data is
+    modelPath = 'data/models/'  # Place to store the models
+
+    testFile = "data/test/data/test.tweet.json"
+    goldFile = 'data/test/test_labels/oracle.tweet.json'
 
 descriptionBranch = load_model(modelPath +'descriptionBranchNorm.h5')
 linkModel = load_model(modelPath +'linkModel.h5') #Full link model

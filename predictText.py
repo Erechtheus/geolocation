@@ -1,3 +1,4 @@
+#Minimal example for running location prediction
 from keras.models import load_model
 import pickle
 from keras.preprocessing.sequence import pad_sequences

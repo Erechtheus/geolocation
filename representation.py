@@ -1,3 +1,4 @@
+#Object representation of the tweet information
 import json
 import unicodedata
 from urllib.parse import urlparse

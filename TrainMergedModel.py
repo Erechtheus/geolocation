@@ -9,12 +9,23 @@ import time
 
 import os
 from sklearn.utils import shuffle
+import json
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 #############################
-binaryPath= 'data/binaries/'    #Place where the serialized training data is
-modelPath= 'data/models/'       #Place to store the models
+#Load configuration from file
+if os.path.isfile('config.json'):
+    print("Loading configutation from configuration file {config.json}")
+    with open('config.json') as json_file:
+        config = json.load(json_file)
+    binaryPath = config['binaryPath']
+    modelPath = config['modelPath']
+
+else:
+    print("Configuration file {config.json} not found")
+    binaryPath = 'data/binaries/'  # Place where the serialized training data is
+    modelPath = 'data/models/'  # Place to store the models
 
 #Random seed
 #from numpy.random import seed

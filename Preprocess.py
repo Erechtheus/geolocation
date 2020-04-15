@@ -10,11 +10,24 @@ from collections import Counter
 import pickle
 import gc
 import string
+import json
+import os
 
 
-trainingFile="data/train/training.twitter.json.gz" #File with  all ~9 Million training tweets
-placesFile='data/train/training.json.gz'           #Place annotation provided by task organisers
-binaryPath= 'data/binaries/'            #Place to store the results
+#Load configuration from file
+if os.path.isfile('config.json'):
+    print("Loading configutation from configuration file {config.json}")
+    with open('config.json') as json_file:
+        config = json.load(json_file)
+    trainingFile = config['trainingFile']
+    placesFile = config['placesFile']
+    binaryPath = config['binaryPath']
+
+else:
+    print("Configuration file {config.json} not found")
+    trainingFile = "data/train/training.twitter.json.gz"  # File with  all ~9 Million training tweets
+    placesFile = 'data/train/training.json.gz'  # Place annotation provided by task organisers
+    binaryPath = 'data/binaries/'  # Place to store the results
 
 #Parser Twitter-JSON; loads all tweets into RAM (not very memory efficient!)
 tweetToTextMapping= {} # Map<Twitter-ID; tweet>

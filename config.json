@@ -1,0 +1,13 @@
+{
+        "trainingFile" : "data/train/training.twitter.json.gz",
+        "placesFile" : "data/train/training.json.gz",
+        "binaryPath" : "data/binaries/",
+        "modelPath" : "data/models/",
+
+        "testFileTweet" : "data/test/data/test.tweet.json",
+        "goldFileTweet" : "data/test/test_labels/oracle.tweet.json",
+
+        "testFileUser" :"data/test/data/test.user.json",
+        "goldFileUser": "data/test/test_labels/oracle.user.json"
+
+}
