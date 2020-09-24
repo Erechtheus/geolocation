@@ -149,6 +149,8 @@ After retrieving the training files, the [preprocess](https://github.com/Erechth
 Pretrained models and preprocessors (e.g., used tokenizer)  are available [here](https://drive.google.com/open?id=1BA_Rj5FJ30nTzvfJvnhgx3k-bzC6Sn9D).
 The evaluation of models is implemented [here](https://github.com/Erechtheus/geolocation/blob/master/EvaluateTweet.py).
 
+# Licence
+Erechtheus/geolocation is licensed under the "GNU General Public License v3.0". See also the licence file [here](https://github.com/Erechtheus/geolocation/blob/master/LICENSE).
 
 # Possible improvements
  - Transformer models
