@@ -4,7 +4,6 @@ from keras.preprocessing.sequence import pad_sequences
 from sklearn.preprocessing import LabelEncoder
 import numpy as np
 import gzip
-import json
 from representation import parseJsonLine, Place, extractPreprocessUrl
 from collections import Counter
 import pickle
